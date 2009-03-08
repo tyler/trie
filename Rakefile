@@ -1,7 +1,6 @@
 require 'rake'
-require 'rake/testtask'
+require 'spec/rake/spectask'
 require 'rake/rdoctask'
-require 'rcov/rcovtask'
 
 begin
   require 'jeweler'
@@ -12,15 +11,16 @@ begin
     s.homepage = "http://github.com/tyler/trie"
     s.description = "TODO"
     s.authors = ["Tyler McMullen"]
+    s.extensions = ['ext/extconf.rb']
+    s.require_paths << 'ext'
+    s.files = FileList["[A-Z]*.*", "{lib,spec,ext}/**/*"]
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
 end
 
-Rake::TestTask.new do |t|
-  t.libs << 'lib'
-  t.pattern = 'test/**/*_test.rb'
-  t.verbose = false
+Spec::Rake::SpecTask.new do |t|
+  t.spec_files = 'spec/**/*_spec.rb'
 end
 
 Rake::RDocTask.new do |rdoc|
@@ -31,10 +31,4 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
-Rcov::RcovTask.new do |t|
-  t.libs << 'test'
-  t.test_files = FileList['test/**/*_test.rb']
-  t.verbose = true
-end
-
-task :default => :rcov
+task :default => :spec
