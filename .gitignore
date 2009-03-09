@@ -1,3 +1,7 @@
 *.sw?
+*.o
+*.bundle
+*.dylib
+Makefile
 .DS_Store
 coverage
