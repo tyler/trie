@@ -2,15 +2,15 @@
 
 Gem::Specification.new do |s|
   s.name = %q{trie}
-  s.version = "0.0.0"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tyler McMullen"]
-  s.date = %q{2009-03-07}
+  s.date = %q{2009-03-08}
   s.description = %q{TODO}
   s.email = %q{tyler@scribd.com}
   s.extensions = ["ext/extconf.rb"]
-  s.files = ["VERSION.yml", "lib/trie.rb", "spec/trie_spec.rb", "ext/extconf.rb", "ext/trie.c"]
+  s.files = ["VERSION.yml", "lib/trie.rb", "spec/test-trie", "spec/test-trie/README", "spec/trie_spec.rb", "ext/extconf.rb", "ext/trie.c"]
   s.homepage = %q{http://github.com/tyler/trie}
   s.require_paths = ["lib", "ext"]
   s.rubygems_version = %q{1.3.1}
