@@ -1,4 +1,4 @@
-system('cd ext/libdatrie && ./configure && make')
+system("cd #{File.dirname(__FILE__)}/../libdatrie && ./configure && make")
 
 require 'mkmf'
 dir_config 'trie'
