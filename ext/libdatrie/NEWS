@@ -1,0 +1,27 @@
+libdatrie
+
+0.1.3 (2008-01-28)
+=====
+- Fix memory bug which can crash on some platforms, reportedly win32.
+  (shepmaster)
+- Fix symbols exporting, so it builds on Mac. (Vee Satayamas)
+- Remove excessive documentation for private API's.
+- Add the SBM file format documentation frequently asked for
+
+0.1.2 (2007-08-25)
+=====
+- Limited symbols export, to avoid name clashing
+- Improved error handling for edge cases
+- Fix crashes
+
+0.1.1 (2006-10-12)
+=====
+- Fix compiler warnings
+- Man page for trietool
+
+0.1.0 (2006-09-18)
+=====
+- Initial release
+- BASE-TAIL Double-array trie structure
+- Single-byte character map support
+

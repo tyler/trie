@@ -1,0 +1,410 @@
+2008-01-28  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.in: Bump the library revision.
+	* NEWS:
+	=== Version 0.1.3 ===
+
+2008-01-28  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* man/trietool.1: Add documentation for the SBM file.
+
+2008-01-28  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* README: Fix my name in the reference.
+
+2008-01-10  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/tail.c (tail_set_suffix): Fix bug for the case in which
+	suffix argument and tail's suffix overlap. Bug report and patch by
+	shepmaster in http://linux.thai.net/node/102.
+
+2008-01-10  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/sb-trie.c (sb_trie_root): Return NULL pointer, rather than
+	FALSE. Bug reported by shepmaster in http://linux.thai.net/node/101.
+
+2007-10-17  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/libdatrie.def: List only symbols in plain format, for Mac
+	build. Thanks Vee Satayamas for the report.
+
+	* datrie/Makefile.am: Add libdatrie.def as libdatrie_la_DEPENDENCIES.
+
+2007-08-28  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* doc/Doxyfile.in: Only generate doc for public API.
+
+2007-08-28  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* doc/Makefile.am, doc/Doxyfile.in: Revert API man pages generation
+	and installation. Update Doxyfile format to doxygen 1.5.3.
+
+2007-08-26  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* man/trietool.1: Escape some minus signs. Mark a variable italic.
+	Thanks debian's lintian.
+
+2007-08-26  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.ac: Post-release version bump.
+
+2007-08-25  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.ac: Bump lib revision.
+	* NEWS:
+	=== Version 0.1.2 ===
+
+2007-08-25  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/Makefile.am, +datrie/trie-private.h (MIN_VAL, MAX_VAL):
+	Add utility macros.
+	* datrie/darray.c (da_output_symbols): Adjust loop boundary to be more
+	overflow-safe.
+	* "-------------" (da_has_children, da_relocate_base): Apply the same
+	loop pattern to prevent out-of-range accesses.
+
+2007-08-24  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/darray.c (da_output_symbols): Do not try to test symbols
+	beyond trie index range. Fixes segfault for trietool list command.
+
+2007-08-19  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	Handle double array index overflow.
+
+	* datrie/triedefs.h (TRIE_INDEX_MAX): Define maximum index value.
+	* datrie/darray.c (TrieIndexInt): Define type for immediate values, so
+	overflow can be detected.
+	* "-------------" (da_extend_pool): Return success/failure status.
+	Accept TrieIndexInt argument for overflow detection.
+	* "-------------" (da_check_free_cell): False when extending fails.
+	Accept TrieIndexInt argument for overflow detection.
+	* "-------------" (da_find_free_base): Return error on failure.
+	* "-------------" (da_insert_branch): Return error on failure.
+	* datrie/trie.c (trie_branch_in_branch, trie_branch_in_tail): Check
+	for failure from da_insert_branch() and return the status.
+	* datrie/darray.{c,h} (da_prune_upto, da_prune): Add da_prune_upto(),
+	for rolling back partial operation in trie_branch_in_branch().
+	Redefine da_prune() in terms of da_prune_upto().
+
+2007-08-16  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/darray.c (da_open, da_find_free_base): Use DA_POOL_BEGIN
+	macro instead of hard-coded number. Remove unused DA_EXTENDING_STEPS.
+
+2007-05-12  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/sb-trie.c (sb_trie_close, sb_trie_save, sb_trie_retrieve,
+	sb_trie_store, sb_trie_enumerate, sb_trie_root, sb_trie_state_clone,
+	sb_trie_state_free, sb_trie_state_rewind, sb_trie_state_walk,
+	sb_trie_state_is_walkable, sb_trie_state_is_terminal,
+	sb_trie_state_is_leaf, sb_trie_state_get_data):
+	Guard against NULL pointers in functions. Thanks to Neutron Soutmun
+	for bug report and initial patch.
+
+2007-04-06  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* doc/Makefile.am: Add install-man target. Also install/uninstall
+	doxygen-generated man pages.
+
+2007-03-27  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.ac (LT_CURRENT, LT_REVISION, LT_AGE),
+	datrie/Makefile.am (libdatrie_la_LDFLAGS), +datrie/libdatrie.def:
+	Add library version info. Limit exported symbols with -export-symbols
+	flag. Always pass -no-undefined flag.
+
+	* configure.ac: Add Win32 DLL building support.
+
+2006-11-02  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/fileutils.{c,h} (file_read_int32, file_write_int32): Add
+	int32 read/write functions.
+
+	* datrie/fileutils.c (file_read_int16, file_write_int16): Use unsigned
+	char buffer instead of and-ing with 0xff, in accordance with int32
+	functions. (Thanks to Vee Satayamas for suggestion).
+
+2006-10-13  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.ac: Post-release version bump.
+
+2006-10-12  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* NEWS:
+	=== Version 0.1.1 ===
+
+2006-10-12  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.ac, Makefile.am, +man/Makefile.am, +man/trietool.1:
+	Add manpage for trietool (moved from debian/).
+
+2006-10-11  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	Fixed compiler warnings.
+
+	* datrie/sb-trie.c (sb_map_alphabet_to_char_str):
+	* datrie/tail.c (tail_open, tail_save, tail_set_suffix):
+	* datrie/trie.c (trie_da_enum_func): Cast pointers to get rid of
+	compiler warnings about char signedness.
+
+	* tools/trietool.c (list_enum_func): Return value on exit.
+
+2006-09-18  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.ac: Post-release version bump.
+
+2006-09-18  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* NEWS, configure.ac:
+	=== Version 0.1.0 ===
+
+2006-09-17  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* README: Filled in.
+
+2006-09-02  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/triedefs.h, datrie/trie.h, datrie/sb-trie.h: Included headers
+	using system header forms in installed headers.
+
+	* datrie/Makefile.am (INCLUDES): Added include flag to ensure it
+	compiles without prior installation.
+
+2006-09-02  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/alpha-map.c (alpha_map_char_to_alphabet,
+	alpha_map_alphabet_to_char): Made sure terminator is always mapped
+	with character 0.
+
+2006-09-02  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/darray.{h,c} (da_is_walkable),
+	datrie/tail.{h,c} (tail_is_walkable_char): Made the tiny functions
+	inline (i.e. macros), for tiny performance gain.
+
+2006-09-02  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/sb-trie.{h,c} (+sb_trie_state_is_walkable): Added walkability
+	test wrapper.
+
+	* datrie/sb-trie.h (sb_trie_state_is_terminal, sb_trie_state_is_leaf),
+	datrie/trie.h (trie_state_is_terminal, trie_state_is_leaf): Fixed typo
+	for "\brief" doxygen tag.
+
+2006-09-02  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/trie.{h,c} (trie_state_is_terminal, +trie_state_is_walkable):
+	Changed trie_state_is_terminal() into a generic walkability test, and
+	made itself a specialized macro calling the function.
+
+2006-08-31  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/darray.{h,c} (+da_is_walkable),
+	datrie/tail.{h,c} (+tail_is_walkable_char),
+	datrie/trie.c (tail_state_is_terminal): <Optimization> Tested
+	walkability by peeking, instead of trying with a cloned state.
+
+	* datrie/tail.{h,c} (tail_walk_char): Removed redundant const in
+	parameter.
+
+2006-08-29  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/trie.h, datrie/sb-trie.h: Wrapped extern "C" in public
+	headers for compiling with C++ code.
+
+2006-08-22  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* tools/trietool.c (decode_command): Exited with proper return values.
+
+	* tools/trietool.c (command_add_list): Removed warning on missing data
+	for keys. This would be normal for data-less dictionaries.
+
+2006-08-21  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/trie.{h,c} (trie_state_rewind),
+	datrie/sb-trie.{h,c} (sb_trie_state_rewind): Added API to rewind a
+	trie state to root, so users do not need to reallocate to do so.
+
+2006-08-21  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/alpha-map.c (alpha_map_open, alpha_map_new): Better used a
+	dedicated function to initialize the map.
+
+2006-08-21  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/alpha-map.c (alpha_map_open): Initialized map list before
+	using. Also skipped mal-formed input lines.
+
+	* tools/trietool.c (command_add_list): Removed duplicated return.
+
+2006-08-21  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.ac, Makefile.am, +datrie.pc.in: Added pkgconfig file.
+
+2006-08-20  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/sb-trie.{h,c} (sb_trie_state_is_terminal),
+	datrie/trie.{h,c} (trie_state_is_terminal, trie_state_is_leaf):
+	Added API for terminal node check and distinguish it from leaf node.
+	(Terminal node can be in either branch or tail, while leaf can only
+	be in tail.)
+
+2006-08-20  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/Makefile.am (pkginclude_HEADERS): Installed sb-trie.h.
+
+	* datrie/sb-trie.h: Fixed file name in doxygen tag.
+
+2006-08-20  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/Makefile.am, +datrie/alpha-map.{h,c}, +datrie/sb-trie.{h,c}:
+	Added alphabet map to map between character set and trie alphabet
+	codes. Also added SBTrie wrapper for 8-bit character sets.
+
+	* datrie/triedefs.h (TRIE_CHAR_MAX): Changed to 255, to fit char type.
+
+	* datrie/trie.{h,c} (trie_state_walk): Removed unnecessary const in
+	character argument.
+
+	* tools/trietool.c: Used SBTrie instead of plain Trie.
+
+2006-08-20  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/fileutils.c (file_read_int16): Fixed bitwise calculation. The
+	second byte should be masked to get rid of possible sign bits
+	introduced by type conversion.
+
+2006-08-19  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/fileutils.c (file_read_int16, file_write_int16): Used shift
+	operations to serialize int, eliminating dependency on <arpa/inet.h>.
+	Thanks Vee Satayamas for the suggestion.
+
+2006-08-18  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/trie.c (trie_retrieve, trie_store, trie_delete): Always walk
+	the null-terminator in tail. Otherwise, comparison with shorter key 
+	will terminate at separate node.
+
+2006-08-18  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/darray.c (find_free_base): Extended pool before getting
+	exhausted.
+
+	* tools/trietool.c (command_add_list): Let tab and comma be field
+	delimitors, rather than white spaces in general.
+
+	* tools/trietool.c (list_enum_func): Do not pad space when printing
+	key data.
+
+2006-08-17  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+	
+	* configure.ac, Makefile.am, +doc/Makefile.am, +doc/Doxyfile.in:
+	Generated document using doxygen.
+
+2006-08-17  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/darray.c (da_prune, da_num_children -> da_has_children):
+	Just checked whether a node has at least one child, instead of
+	counting children and comparing with zero, as a small optimization.
+
+2006-08-17  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* tools/trietool.c (command_add_list, command_delete_list):
+	Implemented.
+
+2006-08-17  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/trie.{h,c} (trie_enumerate), datrie/darray.{h,c}
+	(da_enumerate, da_enumerate_recursive, da_get_state_key): Added key
+	enumeration method.
+
+	* tools/trietool.c (command_list): Implemented.
+
+2006-08-17  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/trie.{h,c} (trie_delete), datrie/darray.{h,c} (da_prune,
+	da_num_children), datrie/tail.{h,c} (tail_delete): Added key deletion
+	method.
+
+	* datrie/tail.c (tail_save): Guarded against null suffix.
+
+	* tools/trietool.c (command_delete): Implemented.
+
+2006-08-17  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/darray.c (da_find_free_base): Made sure the free cell for 
+	first symbol is beyond header cells. Also repeatedly extended the pool
+	until a free cell is found, in case free list is restarted.
+
+2006-08-16  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/fileutils.c (file_open): Created new file only if it does not
+	exist.
+
+	* datrie/trie.c (trie_branch_in_branch): Also set data for tail block.
+
+	* datrie/trie.c (trie_branch_in_tail): Do not free the const suffix
+	block, fixing double free bug.
+
+	* datrie/darray.c (da_insert_branch): Covered the case of negative
+	base, for branching from a separate node.
+
+	* tools/trietool.c (command_add): Removed debug message.
+
+2006-08-16  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* configure.ac, Makefile.am, +tools/Makefile.am, +tools/trietool.c:
+	Added trietool utility.
+
+	* datrie/darray.c (da_get_free_list): Fixed typo in macro name.
+
+	* datrie/datrie.c (da_extend_pool): Updated num_cells immediately 
+	after realloc(), to let the cell accesses pass boundary checks.
+
+	* datrie/tail.c (tail_get_suffix, tail_set_suffix, tail_alloc_block,
+	tail_free_block, tail_get_data, tail_set_data, tail_walk_str,
+	tail_walk_char): Started tail blocks indexing from 1 (defined as
+	TAIL_START_BLOCKNO macro) rather than 0, because we use signed values
+	to distinguish pointers in darray.
+
+	* datrie/tail.{c,h} (tail_get_suffix), datrie/trie.c
+	(trie_branch_in_tail): Made tail_get_suffix return const pointer.
+
+	* datrie/darray.c (da_close, da_save), datrie/tail.c (tail_close,
+	tail_save): Checked errors and returned appropriate codes.
+
+	* datrie/trie.c (trie_open): Checked errors on files openning and
+	resumed appropriately.
+
+2006-08-15  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/Makefile.am, +datrie/fileutils.c: Added fileutils.c for
+	implementation of file utility functions.
+
+	* datrie/fileutils.{c,h}, datrie/darray.c (da_open), datrie/tail.c
+	(tail_open): Adjusted file_read_int{8,16} API so error can be checked.
+
+2006-08-15  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/Makefile.am, +datrie/tail.c, datrie/tail.h: Added tail.c for
+	trie suffix implementation. Adjusted some API to not require size_t.
+
+	* datrile/fileutils.h: Added more functions required by tail.c.
+
+	* datrie/trie.c (trie_branch_in_tail): Added check for null suffix.
+
+2006-08-14  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* datrie/Makefile.am, +datrie/darray.c, +datrie/fileutils.h:
+	Added darray.c for double-array structure implementation, and 
+	fileutils.h declarations for keeping file manipulation functions.
+
+	* datrie/triedefs.h: Added TRIE_CHAR_MAX constant for alphabet
+	enumeration. Changed TRIE_INDEX_ERROR to 0, as negative number has its
+	own meaning.
+
+2006-08-12  Theppitak Karoonboonyanan  <thep@linux.thai.net>
+
+	* === First import the project ===

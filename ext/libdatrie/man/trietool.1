@@ -1,0 +1,107 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH TRIETOOL 1 "OCTOBER 2006"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7)
+.SH NAME
+trietool \- trie manipulation tool
+.SH SYNOPSIS
+.B trietool
+.RI [ options ] " trie command arg" ...
+.SH DESCRIPTION
+\fBtrietool\fP is the command-line tool for manipulating double-array trie 
+data.  It can be used to query, add and remove words in trie data.
+.PP
+.SH THE TRIE
+The \fItrie\fP argument specifies the name of the trie to manipulate. 
+Tries are stored in a set of files with the same name but different 
+extentions, namely `.sbm', `.br' and `.tl'.
+.PP
+To create a new trie, one need to prepare the file with `.sbm' extension, 
+describing the single-byte alphabet set of the trie.  The SBM defines a 
+vector that maps hexadecimal character encodings to a continuous range of 
+integers. The mapped integers will be used as internal alphabet for the trie. 
+Such mapping can improve the space allocation within the trie data, regardless 
+of non-continuity of the character set being used, as the mapped range is 
+always continuous.
+.PP
+The SBM file is a plain text file, with each line listing a range of 8-bit 
+character encodings to be added to the alphabet set, in the format:
+.PP
+.Vb 1
+    [0xSS,0xTT]
+.Ve
+.PP
+where `0xSS' and `0xTT' are hexadecimal values of starting and ending 
+character code for the range, respectively.
+.PP
+For example, for a dictionary that contains only English words witout any 
+punctuations, one may prepare `\fItrie\fP.sbm' as:
+.PP
+.Vb 2
+    [0x41,0x5a]
+    [0x61,0x7a]
+.Ve
+.PP
+The first line lists the ASCII codes for A-Z, and the second for a-z.
+.SH COMMANDS
+Available commands are:
+.TP
+\fBadd\fP \fIword data\fP ...
+Add \fIword\fP to trie, associated with integer \fIdata\fP.  Arbitrary number of
+words-data pairs can be given.  Two arguments will be read at a time, the first 
+will be treated as \fIword\fP, and the second as \fIdata\fP.
+.TP
+\fBadd-list\fP \fIlist-file\fP
+Add words with associated data listed in \fIlist-file\fP to trie.  The 
+\fIlist-file\fP must be a text file listing one word per line.  The associated
+data can be put after the word in the same line, separated with tab (`\\t')
+character.  If the data field is omitted, a default value (\-1) will be used
+instead.
+.TP
+\fBdelete\fP \fIword\fP ...
+Delete \fIword\fP from trie.  Arbitrary number of words to delete can be given.
+.TP
+\fBdelete-list\fP \fIlist-file\fP
+Delete words listed in \fIlist-file\fP from trie.  The \fIlist-file\fP must be 
+a text file listing one word per line.
+.TP
+\fBquery\fP \fIword\fP
+Search for \fIword\fP in trie.  If \fIword\fP exists, its associated data
+is printed to standard output.  Otherwise, error message is printed to standard
+error, with nothing printed to standard output.
+.TP
+\fBlist\fP
+List all words in trie to standard output.  The output lists one word-data pair
+per line, separated with tab (`\\t') character, the format appropriate for
+being \fIlist-file\fP for the \fBadd-list\fP command.
+.SH OPTIONS
+This program follows the usual GNU command line syntax, with long
+options starting with two dashes (`\-\-').
+A summary of options is included below.
+.TP
+.B \-p, \-\-path \fIdir\fP
+Set trie directory to \fIdir\fP [default=`.']
+.TP
+.B \-h, \-\-help
+Show summary of options.
+.TP
+.B \-V, \-\-version
+Show version of program.
+.br
+.SH AUTHOR
+libdatrie was written by Theppitak Karoonboonyanan.
+.PP
+This manual page was written by Theppitak Karoonboonyanan <thep@linux.thai.net>.
