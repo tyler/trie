@@ -48,6 +48,11 @@ describe Trie do
       @trie.add('forsooth').should == true
       @trie.get('forsooth').should == -1
     end
+
+    it 'adds a word with a weight to the trie' do
+      @trie.add('chicka',123).should == true
+      @trie.get('chicka').should == 123
+    end
   end
 
   describe :delete do
@@ -74,6 +79,24 @@ describe Trie do
       children.size.should == 2
       children.should include('rock')
       children.should include('rocket')
+    end
+  end
+
+  describe :walk_to_terminal do
+    it 'returns the first word found along a path' do
+      @trie.add 'anderson'
+      @trie.add 'andreas'
+      @trie.add 'and'
+
+      @trie.walk_to_terminal('anderson').should == 'and'
+    end
+
+    it 'returns the first word and value along a path' do
+      @trie.add 'anderson'
+      @trie.add 'andreas'
+      @trie.add 'and', 15
+
+      @trie.walk_to_terminal('anderson',true).should == ['and', 15]
     end
   end
 end

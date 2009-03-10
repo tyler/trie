@@ -83,13 +83,21 @@ static VALUE trie_get(VALUE self, VALUE key) {
 	return Qnil;
 }
 
-static VALUE trie_add(VALUE self, VALUE key) {
+static VALUE trie_add(VALUE self, VALUE args) {
     SBTrie *sb_trie;
     Data_Get_Struct(self, SBTrie, sb_trie);
 
+    long size = RARRAY(args)->len;
+    if(size < 1 || size > 2)
+	return Qnil;
+
+    VALUE key;
+    key = RARRAY(args)->ptr[0];
+    short value = size == 2 ? NUM2INT(RARRAY(args)->ptr[1]) : TRIE_DATA_ERROR;
+    
     const TrieChar *sb_key = stringToTrieChar(key);
     
-    if(sb_trie_store(sb_trie, sb_key, TRIE_DATA_ERROR))
+    if(sb_trie_store(sb_trie, sb_key, value))
 	return Qtrue;
     else
 	return Qnil;
@@ -114,7 +122,7 @@ static VALUE walk_all_paths(VALUE children, SBTrieState *state, char *prefix) {
 	    SBTrieState *next_state = sb_trie_state_clone(state);
 	    sb_trie_state_walk(next_state, (TrieChar)c);
 
-	    char *word = (char*) malloc(strlen(prefix) + 2);
+	    char *word = (char*)malloc(strlen(prefix) + 2);
 	    strcat(strcpy(word, prefix), (char*)&c);
 
 	    if(sb_trie_state_is_terminal(next_state))
@@ -154,6 +162,53 @@ static VALUE trie_children(VALUE self, VALUE prefix) {
     return children;
 }
 
+static VALUE trie_walk_to_terminal(VALUE self, VALUE args) {
+    SBTrie *sb_trie;
+    Data_Get_Struct(self, SBTrie, sb_trie);
+
+    long size = RARRAY(args)->len;
+    if(size < 1 || size > 2)
+	return Qnil;
+
+    VALUE rb_path;
+    rb_path = RARRAY(args)->ptr[0];
+    short include_value = size == 2 ? RTEST(RARRAY(args)->ptr[1]) : 0;
+    
+    SBTrieState *state = sb_trie_root(sb_trie);
+    
+    char *path = RSTRING(rb_path)->ptr;
+
+    TrieChar *iterator = (TrieChar*)path;
+    while(*iterator != '\0') {
+	if(sb_trie_state_is_terminal(state)) {
+	    int word_length = (int)iterator - (int)path;
+	    char *word = (char*)malloc(word_length + 1);
+	    strncpy(word, path, word_length);
+	    word[word_length] = '\0';
+	    VALUE rb_word = rb_str_new2((const char*)word);
+
+	    if(include_value) {
+		sb_trie_state_walk(state, (TrieChar)'\0');
+
+		VALUE return_ary = rb_ary_new();
+		rb_ary_push(return_ary, rb_word);
+		TrieData trie_data = sb_trie_state_get_data(state);
+		rb_ary_push(return_ary, INT2FIX(trie_data));
+		return return_ary;
+	    } else
+		return rb_word;
+	}
+
+	if(!sb_trie_state_is_walkable(state, *iterator))
+	   return Qnil;
+
+	sb_trie_state_walk(state, *iterator);
+	iterator++;
+    }
+
+    return Qnil;
+}
+
 static VALUE trie_get_path(VALUE self) {
     return rb_iv_get(self, "@path");
 }
@@ -167,8 +222,9 @@ void Init_trie() {
     rb_define_method(cTrie, "path", trie_get_path, 0);
     rb_define_method(cTrie, "has_key?", trie_has_key, 1);
     rb_define_method(cTrie, "get", trie_get, 1);
-    rb_define_method(cTrie, "add", trie_add, 1);
+    rb_define_method(cTrie, "add", trie_add, -2);
     rb_define_method(cTrie, "delete", trie_delete, 1);
     rb_define_method(cTrie, "close", trie_close, 0);
     rb_define_method(cTrie, "children", trie_children, 1);
+    rb_define_method(cTrie, "walk_to_terminal", trie_walk_to_terminal, -2);
 }
