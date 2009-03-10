@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+VALUE cTrie, cTrieNode;
+
 static TrieChar* stringToTrieChar(VALUE string) {
     return (TrieChar*) RSTRING(string)->ptr;
 }
@@ -206,15 +208,111 @@ static VALUE trie_walk_to_terminal(VALUE self, VALUE args) {
 	iterator++;
     }
 
+    sb_trie_state_free(state);
+
     return Qnil;
 }
 
 static VALUE trie_get_path(VALUE self) {
     return rb_iv_get(self, "@path");
 }
- 
-VALUE cTrie;
 
+static void trie_node_free(SBTrieState *state) {
+    if(state)
+	sb_trie_state_free(state);
+}
+
+static VALUE trie_node_alloc(VALUE klass) {
+    SBTrieState *state;
+    VALUE obj;
+    
+    obj = Data_Wrap_Struct(klass, 0, trie_node_free, state);
+
+    return obj;
+}
+
+static VALUE trie_root(VALUE self) {
+    SBTrie *sb_trie;
+    Data_Get_Struct(self, SBTrie, sb_trie);
+
+    VALUE trie_node = trie_node_alloc(cTrieNode);
+
+    // replace the pretend SBTrieState created in TrieNode's alloc with a real one
+    RDATA(trie_node)->data = sb_trie_root(sb_trie);
+    
+    rb_iv_set(trie_node, "@state", Qnil);
+    rb_iv_set(trie_node, "@full_state", rb_str_new2(""));
+    return trie_node;
+}
+
+static VALUE trie_node_get_state(VALUE self) {
+    return rb_iv_get(self, "@state");
+}
+static VALUE trie_node_get_full_state(VALUE self) {
+    return rb_iv_get(self, "@full_state");
+}
+
+static VALUE trie_node_walk_bang(VALUE self, VALUE rchar) {
+    SBTrieState *state;
+    Data_Get_Struct(self, SBTrieState, state);
+
+    if(RSTRING(rchar)->len != 1)
+	return Qnil;
+
+    char ch = RSTRING(rchar)->ptr[0];
+    int result = sb_trie_state_walk(state, (TrieChar)ch);
+    
+    if(result) {
+	rb_iv_set(self, "@state", rchar);
+	VALUE full_state = rb_iv_get(self, "@full_state");
+	rb_str_append(full_state, rchar);
+	rb_iv_set(self, "@full_state", full_state);
+	return self;
+    } else
+	return Qnil;
+}
+
+static VALUE trie_node_value(VALUE self) {
+    SBTrieState *state, *dup;
+    Data_Get_Struct(self, SBTrieState, state);
+    
+    dup = sb_trie_state_clone(state);
+
+    sb_trie_state_walk(dup, (TrieChar)'\0');
+    TrieData trie_data = sb_trie_state_get_data(dup);
+    sb_trie_state_free(dup);
+
+    return TRIE_DATA_ERROR == trie_data ? Qnil : INT2FIX(trie_data);
+}
+
+static VALUE trie_node_terminal(VALUE self) {
+    SBTrieState *state;
+    Data_Get_Struct(self, SBTrieState, state);
+    
+    return sb_trie_state_is_terminal(state) ? Qtrue : Qnil;
+}
+
+static VALUE trie_node_leaf(VALUE self) {
+    SBTrieState *state;
+    Data_Get_Struct(self, SBTrieState, state);
+    
+    return sb_trie_state_is_leaf(state) ? Qtrue : Qnil;
+}
+
+static VALUE trie_node_clone(VALUE self) {
+    SBTrieState *state;
+    Data_Get_Struct(self, SBTrieState, state);
+    
+    VALUE new_node = trie_node_alloc(cTrieNode);
+    RDATA(new_node)->data = sb_trie_state_clone(state);
+    
+    rb_iv_set(new_node, "@state", rb_iv_get(self, "@state"));
+    rb_iv_set(new_node, "@full_state", rb_iv_get(self, "@full_state"));
+
+    return new_node;
+}
+
+ 
 void Init_trie() {
     cTrie = rb_define_class("Trie", rb_cObject);
     rb_define_alloc_func(cTrie, trie_alloc);
@@ -227,4 +325,15 @@ void Init_trie() {
     rb_define_method(cTrie, "close", trie_close, 0);
     rb_define_method(cTrie, "children", trie_children, 1);
     rb_define_method(cTrie, "walk_to_terminal", trie_walk_to_terminal, -2);
+    rb_define_method(cTrie, "root", trie_root, 0);
+
+    cTrieNode = rb_define_class("TrieNode", rb_cObject);
+    rb_define_alloc_func(cTrieNode, trie_node_alloc);
+    rb_define_method(cTrieNode, "state", trie_node_get_state, 0);
+    rb_define_method(cTrieNode, "full_state", trie_node_get_full_state, 0);
+    rb_define_method(cTrieNode, "walk!", trie_node_walk_bang, 1);
+    rb_define_method(cTrieNode, "value", trie_node_value, 0);
+    rb_define_method(cTrieNode, "terminal?", trie_node_terminal, 0);
+    rb_define_method(cTrieNode, "leaf?", trie_node_leaf, 0);
+    rb_define_method(cTrieNode, "clone", trie_node_clone, 0);
 }
