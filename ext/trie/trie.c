@@ -95,7 +95,7 @@ static VALUE trie_add(VALUE self, VALUE args) {
 
     VALUE key;
     key = RARRAY(args)->ptr[0];
-    int32 value = size == 2 ? NUM2INT(RARRAY(args)->ptr[1]) : TRIE_DATA_ERROR;
+    TrieData value = size == 2 ? NUM2INT(RARRAY(args)->ptr[1]) : TRIE_DATA_ERROR;
     
     const TrieChar *sb_key = stringToTrieChar(key);
     
