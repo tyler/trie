@@ -1,0 +1,102 @@
+h1. Trie
+
+This is a Ruby binding for libdatrie, a dual-array trie implemented in C.  It is a disk-based trie so the memory usage is minimal, but it's still quite fast.
+
+
+h2. What is a trie?
+
+I suck at explaining things.  Wikipedia doesn't.  http://wikipedia.org/wiki/Trie.
+
+But in short a trie is a data structure that holds strings in a tree.  So if you inserted the words 'arc', 'ark', and 'ape' in a trie you could visualize it thusly:
+
+<pre>
+      p - e
+    /
+  a - r - c
+        \
+          k
+</pre>
+
+It's easy to see how this can have pretty neat implications for things like searching through lists of strings, sorting lists of strings, and things like spelling correction and autocompletion.
+
+
+h2. Tutorial
+
+Let's go through building a simple autocompleter using Trie.  The very first thing you'll want to do is create a directory for your trie's data to be held in.  Remember, this is a disk-based trie so having a place to store the files is important.
+
+<pre><code>
+  Trie.new('your-directory')
+</code></pre>
+
+When you call <code>Trie.new</code> for the first time with the given directory as the first argument it will create three files.  'trie.br', 'trie.tl', and 'trie.sbm'.  'trie.br' and 'trie.tl' are binary files corresponding to the two arrays which represent the trie structure it self and the tails and data for the strings, respectively.  You probably don't want to mess with these directly, use the library for that.  'trie.sbm' controls what characters are valid in the trie.  Look into the libdatrie documentation for more details.
+
+Anyway.  So we've created our blank trie.  Now, since we're creating an autocompleter, we'll need to add some words into it.  We do that simply with the add method.
+
+<pre><code>
+  words.each do |word|
+    trie.add word
+  end
+</code></pre>
+
+Or if you have some integer data to store along with the words, such as weights or scores of some kind, you'd do it like so...
+
+<pre><code>
+  words_and_weights do |word,weight|
+    trie.add word, weight
+  end
+</code></pre>
+
+Great, so we've populated our trie with some words.  (Note the limitations section below.)  Let's make sure those words are really there.
+
+<pre><code>
+  trie.has_key?('widget')  #=> true
+
+  trie.get('widget')  #=> -1 or your value
+
+  trie.get('not-in-the-trie')  #=> nil
+</code></pre>
+
+If you didn't enter a value to go along with the word, calling <code>get</code> with it will return -1.
+
+Okay great, we have our populated trie, we've confirmed that the keys are in there.  Let's make an autocompleter!  For this we'll need to use the <code>children</code> method.  We'll do this as a simple Rails action, with the assumption you've initialized the trie into <code>TRIE</code>.
+
+<pre><code>
+  def autocomplete
+    children = TRIE.children(params[:prefix])
+
+    respond_to do |format|
+      format.js { render(:string => JSON.dump(children)) }
+      format.yaml { render(:string => YAML.dump(children)) }
+    end
+  end
+</code></pre>
+
+Yep, that's it.
+
+There are, of course, some more interesting and advanced ways to use a trie.  For instance, this snippet take a string, then walks down the trie, noting each word it finds along the way.
+
+<pre><code>
+  word = 'forestry'
+  node = trie.root
+
+  word.split('').each do |char|
+    break unless node.walk!(char)
+    if node.terminal?
+      puts "Found me a word: #{node.full_state}"
+    end
+  end
+</code></pre>
+
+By calling <code>root</code> on a Trie object, you get a TrieNode, pointed at the root of the trie.  You can then use this node to walk the trie and perceive things about each word.
+
+
+h2. Limitations
+
+By default libdatrie supports only 32767 words in a trie, as well as only 16-bit integers for the value that goes along with inserted strings.  This certainly makes sense for some purposes on some platforms... but I want to be able to enter bajillions of words with large bits of data associated.  So, I've forked the project to switch both indexes and datum to 32-bit.  So you can enter... a lot of information now.  You can find my fork at http://github.com/tyler/libdatrie.
+
+h2. Bugs
+
+Saving to disk doesn't work correctly.  Not sure why... maybe related to my libdatrie changes.
+
+
+Copyright (c) 2008 Tyler McMullen. See LICENSE for details.
