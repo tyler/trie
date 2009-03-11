@@ -95,7 +95,7 @@ static VALUE trie_add(VALUE self, VALUE args) {
 
     VALUE key;
     key = RARRAY(args)->ptr[0];
-    short value = size == 2 ? NUM2INT(RARRAY(args)->ptr[1]) : TRIE_DATA_ERROR;
+    int32 value = size == 2 ? NUM2INT(RARRAY(args)->ptr[1]) : TRIE_DATA_ERROR;
     
     const TrieChar *sb_key = stringToTrieChar(key);
     
@@ -115,6 +115,16 @@ static VALUE trie_delete(VALUE self, VALUE key) {
 	return Qtrue;
     else
 	return Qnil;
+}
+
+static VALUE trie_save(VALUE self) {
+    SBTrie *sb_trie;
+    Data_Get_Struct(self, SBTrie, sb_trie);
+    
+    if(sb_trie_save(sb_trie) == -1)
+	return Qnil;
+    else
+	return Qtrue;
 }
 
 static VALUE walk_all_paths(VALUE children, SBTrieState *state, char *prefix) {
@@ -326,6 +336,7 @@ void Init_trie() {
     rb_define_method(cTrie, "children", trie_children, 1);
     rb_define_method(cTrie, "walk_to_terminal", trie_walk_to_terminal, -2);
     rb_define_method(cTrie, "root", trie_root, 0);
+    rb_define_method(cTrie, "save", trie_save, 0);
 
     cTrieNode = rb_define_class("TrieNode", rb_cObject);
     rb_define_alloc_func(cTrieNode, trie_node_alloc);

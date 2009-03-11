@@ -53,6 +53,11 @@ describe Trie do
       @trie.add('chicka',123).should == true
       @trie.get('chicka').should == 123
     end
+
+    it 'adds values greater than 16-bit allows' do
+      @trie.add('chicka', 72_000).should == true
+      @trie.get('chicka').should == 72_000
+    end
   end
 
   describe :delete do
@@ -107,6 +112,16 @@ describe Trie do
 
     it 'returns a different TrieNode each time' do
       @trie.root.should_not == @trie.root
+    end
+  end
+
+  describe :save do
+    it 'saves the trie to disk such that another trie can be spawned which will read succesfully' do
+      @trie.add('omgwtf',123)
+      @trie.save
+
+      trie2 = Trie.new(TRIE_PATH)
+      trie2.get('omgwtf').should == 123
     end
   end
 end
