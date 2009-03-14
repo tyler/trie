@@ -160,7 +160,7 @@ static VALUE trie_children(VALUE self, VALUE prefix) {
     TrieChar *iterator = (TrieChar*)sb_prefix;
     while(*iterator != '\0') {
 	if(!sb_trie_state_is_walkable(state, *iterator))
-	   return Qnil;
+	    return rb_ary_new();
 	sb_trie_state_walk(state, *iterator);
 	iterator++;
     }
@@ -169,6 +169,72 @@ static VALUE trie_children(VALUE self, VALUE prefix) {
 	rb_ary_push(children, prefix);
 
     walk_all_paths(children, state, (char*)sb_prefix);
+
+    sb_trie_state_free(state);
+    return children;
+}
+static VALUE walk_all_paths_with_values(VALUE children, SBTrieState *state, char *prefix) {
+    int c;
+    for(c = 1; c < TRIE_CHAR_MAX; c++) {
+	if(sb_trie_state_is_walkable(state,c)) {
+	    SBTrieState *next_state = sb_trie_state_clone(state);
+	    sb_trie_state_walk(next_state, (TrieChar)c);
+
+	    char *word = (char*)malloc(strlen(prefix) + 2);
+	    strcat(strcpy(word, prefix), (char*)&c);
+
+	    if(sb_trie_state_is_terminal(next_state)) {
+		SBTrieState *end_state = sb_trie_state_clone(next_state);
+		sb_trie_state_walk(end_state, '\0');
+
+		VALUE tuple = rb_ary_new();
+		rb_ary_push(tuple, rb_str_new2(word));
+		TrieData trie_data = sb_trie_state_get_data(end_state);
+		rb_ary_push(tuple, INT2FIX(trie_data));
+		rb_ary_push(children, tuple);
+
+		sb_trie_state_free(end_state);
+	    }
+
+	    walk_all_paths_with_values(children, next_state, word);
+
+	    sb_trie_state_free(next_state);
+	}
+    }
+}
+
+static VALUE trie_children_with_values(VALUE self, VALUE prefix) {
+    SBTrie *sb_trie;
+    Data_Get_Struct(self, SBTrie, sb_trie);
+
+    const TrieChar *sb_prefix = stringToTrieChar(prefix);
+    
+    VALUE children = rb_ary_new();
+
+    SBTrieState *state = sb_trie_root(sb_trie);
+    
+    TrieChar *iterator = (TrieChar*)sb_prefix;
+    while(*iterator != '\0') {
+	if(!sb_trie_state_is_walkable(state, *iterator))
+	    return rb_ary_new();
+	sb_trie_state_walk(state, *iterator);
+	iterator++;
+    }
+
+    if(sb_trie_state_is_terminal(state)) {
+	SBTrieState *end_state = sb_trie_state_clone(state);
+	sb_trie_state_walk(end_state, '\0');
+
+	VALUE tuple = rb_ary_new();
+	rb_ary_push(tuple, prefix);
+	TrieData trie_data = sb_trie_state_get_data(end_state);
+	rb_ary_push(tuple, INT2FIX(trie_data));
+	rb_ary_push(children, tuple);
+
+	sb_trie_state_free(end_state);
+    }
+
+    walk_all_paths_with_values(children, state, (char*)sb_prefix);
 
     sb_trie_state_free(state);
     return children;
@@ -334,6 +400,7 @@ void Init_trie() {
     rb_define_method(cTrie, "delete", trie_delete, 1);
     rb_define_method(cTrie, "close", trie_close, 0);
     rb_define_method(cTrie, "children", trie_children, 1);
+    rb_define_method(cTrie, "children_with_values", trie_children_with_values, 1);
     rb_define_method(cTrie, "walk_to_terminal", trie_walk_to_terminal, -2);
     rb_define_method(cTrie, "root", trie_root, 0);
     rb_define_method(cTrie, "save", trie_save, 0);

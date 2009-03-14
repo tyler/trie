@@ -76,7 +76,7 @@ describe Trie do
     end
 
     it 'returns nil if prefix does not exist' do
-      @trie.children('ajsodij').should be_nil
+      @trie.children('ajsodij').should == []
     end
 
     it 'includes the prefix if the prefix is a word' do
@@ -84,6 +84,31 @@ describe Trie do
       children.size.should == 2
       children.should include('rock')
       children.should include('rocket')
+    end
+  end
+
+  describe :children_with_values do
+    before :each do
+      @trie.add('abc',2)
+      @trie.add('abcd',4)
+    end
+
+    it 'returns all words with values beginning with a given prefix' do
+      children = @trie.children_with_values('ab')
+      children.size.should == 2
+      children.should include(['abc',2])
+      children.should include(['abcd',4])
+    end
+
+    it 'returns nil if prefix does not exist' do
+      @trie.children_with_values('ajsodij').should == []
+    end
+
+    it 'includes the prefix if the prefix is a word' do
+      children = @trie.children_with_values('abc')
+      children.size.should == 2
+      children.should include(['abc',2])
+      children.should include(['abcd',4])
     end
   end
 
