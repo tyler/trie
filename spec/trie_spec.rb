@@ -75,7 +75,7 @@ describe Trie do
       children.should include('rocket')
     end
 
-    it 'returns nil if prefix does not exist' do
+    it 'returns blank array if prefix does not exist' do
       @trie.children('ajsodij').should == []
     end
 
@@ -84,6 +84,10 @@ describe Trie do
       children.size.should == 2
       children.should include('rock')
       children.should include('rocket')
+    end
+
+    it 'returns blank array if prefix is nil' do
+      @trie.children(nil).should == []
     end
   end
 
@@ -109,6 +113,10 @@ describe Trie do
       children.size.should == 2
       children.should include(['abc',2])
       children.should include(['abcd',4])
+    end
+
+    it 'returns blank array if prefix is nil' do
+      @trie.children_with_values(nil).should == []
     end
   end
 

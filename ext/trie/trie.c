@@ -7,6 +7,7 @@
 VALUE cTrie, cTrieNode;
 
 static TrieChar* stringToTrieChar(VALUE string) {
+    StringValue(string);
     return (TrieChar*) RSTRING(string)->ptr;
 }
 
@@ -148,6 +149,9 @@ static VALUE walk_all_paths(VALUE children, SBTrieState *state, char *prefix) {
 }
 
 static VALUE trie_children(VALUE self, VALUE prefix) {
+    if(NIL_P(prefix))
+	return rb_ary_new();
+
     SBTrie *sb_trie;
     Data_Get_Struct(self, SBTrie, sb_trie);
 
@@ -204,6 +208,9 @@ static VALUE walk_all_paths_with_values(VALUE children, SBTrieState *state, char
 }
 
 static VALUE trie_children_with_values(VALUE self, VALUE prefix) {
+    if(NIL_P(prefix))
+	return rb_ary_new();
+
     SBTrie *sb_trie;
     Data_Get_Struct(self, SBTrie, sb_trie);
 
