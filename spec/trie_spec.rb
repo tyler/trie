@@ -10,18 +10,11 @@ describe Trie do
     @trie.add('frederico')
   end
   
-  after :each do
-    @trie.close
-    File.delete('spec/test-trie/trie.br')
-    File.delete('spec/test-trie/trie.tl')
-    File.delete('spec/test-trie/trie.sbm')
-  end
-
-  describe :path do
-    it 'returns the correct path' do
-      @trie.path.should == TRIE_PATH
-    end
-  end
+  #describe :path do
+  #  it 'returns the correct path' do
+  #    @trie.path.should == TRIE_PATH
+  #  end
+  #end
 
   describe :has_key? do
     it 'returns true for words in the trie' do
@@ -120,23 +113,23 @@ describe Trie do
     end
   end
 
-  describe :walk_to_terminal do
-    it 'returns the first word found along a path' do
-      @trie.add 'anderson'
-      @trie.add 'andreas'
-      @trie.add 'and'
+  #describe :walk_to_terminal do
+  #  it 'returns the first word found along a path' do
+  #    @trie.add 'anderson'
+  #    @trie.add 'andreas'
+  #    @trie.add 'and'
 
-      @trie.walk_to_terminal('anderson').should == 'and'
-    end
+  #    @trie.walk_to_terminal('anderson').should == 'and'
+  #  end
 
-    it 'returns the first word and value along a path' do
-      @trie.add 'anderson'
-      @trie.add 'andreas'
-      @trie.add 'and', 15
+  #  it 'returns the first word and value along a path' do
+  #    @trie.add 'anderson'
+  #    @trie.add 'andreas'
+  #    @trie.add 'and', 15
 
-      @trie.walk_to_terminal('anderson',true).should == ['and', 15]
-    end
-  end
+  #    @trie.walk_to_terminal('anderson',true).should == ['and', 15]
+  #  end
+  #end
 
   describe :root do
     it 'returns a TrieNode' do
@@ -169,10 +162,10 @@ describe TrieNode do
   end
   
   after :each do
-    @trie.close
-    File.delete('spec/test-trie/trie.br')
-    File.delete('spec/test-trie/trie.tl')
-    File.delete('spec/test-trie/trie.sbm')
+#    @trie.close
+#    File.delete('spec/test-trie/trie.br')
+#    File.delete('spec/test-trie/trie.tl')
+#    File.delete('spec/test-trie/trie.sbm')
   end
 
   describe :state do
