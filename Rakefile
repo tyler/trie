@@ -11,7 +11,7 @@ begin
     s.homepage = "http://github.com/tyler/trie"
     s.description = "TODO"
     s.authors = ["Tyler McMullen"]
-    s.extensions = ['ext/trie/extconf.rb']
+    s.extensions = ['ext/extconf.rb']
     s.require_paths << 'ext'
     s.files = FileList["[A-Z]*.*", "{lib,spec,ext}/**/*"]
   end

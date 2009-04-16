@@ -1,10 +1,8 @@
-require 'trie'
-
-TRIE_PATH = 'spec/test-trie'
+require File.dirname(__FILE__) + '/../ext/trie'
 
 describe Trie do
   before :each do
-    @trie = Trie.new(TRIE_PATH);
+    @trie = Trie.new;
     @trie.add('rocket')
     @trie.add('rock')
     @trie.add('frederico')
@@ -141,33 +139,26 @@ describe Trie do
     end
   end
 
-  describe :save do
-    it 'saves the trie to disk such that another trie can be spawned which will read succesfully' do
-      @trie.add('omgwtf',123)
-      @trie.save
-
-      trie2 = Trie.new(TRIE_PATH)
-      trie2.get('omgwtf').should == 123
-    end
-  end
+  #describe :save do
+  #  it 'saves the trie to disk such that another trie can be spawned which will read succesfully' do
+  #    @trie.add('omgwtf',123)
+  #    @trie.save
+  #
+  #    trie2 = Trie.new(TRIE_PATH)
+  #    trie2.get('omgwtf').should == 123
+  #  end
+  #end
 end
 
 describe TrieNode do
   before :each do
-    @trie = Trie.new(TRIE_PATH);
+    @trie = Trie.new;
     @trie.add('rocket',1)
     @trie.add('rock',2)
     @trie.add('frederico',3)
     @node = @trie.root
   end
   
-  after :each do
-#    @trie.close
-#    File.delete('spec/test-trie/trie.br')
-#    File.delete('spec/test-trie/trie.tl')
-#    File.delete('spec/test-trie/trie.sbm')
-  end
-
   describe :state do
     it 'returns the most recent state character' do
       @node.walk!('r')

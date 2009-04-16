@@ -1,1 +1,1 @@
-require File.dirname(__FILE__) + '/../ext/trie/trie'
+require File.dirname(__FILE__) + '/../ext/trie'
