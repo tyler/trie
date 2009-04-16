@@ -1,6 +1,6 @@
 h1. Trie
 
-This is a Ruby binding for libdatrie, a dual-array trie implemented in C.  It is a disk-based trie so the memory usage is minimal, but it's still quite fast.
+This is a trie for Ruby using libdatrie. It uses a dual-array system, meaning it has best-in-class memory usage and search time.
 
 
 h2. What is a trie?
@@ -22,13 +22,11 @@ It's easy to see how this can have pretty neat implications for things like sear
 
 h2. Tutorial
 
-Let's go through building a simple autocompleter using Trie.  The very first thing you'll want to do is create a directory for your trie's data to be held in.  Remember, this is a disk-based trie so having a place to store the files is important.
+Let's go through building a simple autocompleter using Trie.
 
 <pre><code>
-  Trie.new('your-directory')
+  Trie.new
 </code></pre>
-
-When you call <code>Trie.new</code> for the first time with the given directory as the first argument it will create three files.  'trie.br', 'trie.tl', and 'trie.sbm'.  'trie.br' and 'trie.tl' are binary files corresponding to the two arrays which represent the trie structure it self and the tails and data for the strings, respectively.  You probably don't want to mess with these directly, use the library for that.  'trie.sbm' controls what characters are valid in the trie.  Look into the libdatrie documentation for more details.
 
 Anyway.  So we've created our blank trie.  Now, since we're creating an autocompleter, we'll need to add some words into it.  We do that simply with the add method.
 
@@ -88,15 +86,6 @@ There are, of course, some more interesting and advanced ways to use a trie.  Fo
 </code></pre>
 
 By calling <code>root</code> on a Trie object, you get a TrieNode, pointed at the root of the trie.  You can then use this node to walk the trie and perceive things about each word.
-
-
-h2. Limitations
-
-By default libdatrie supports only 32767 words in a trie, as well as only 16-bit integers for the value that goes along with inserted strings.  This certainly makes sense for some purposes on some platforms... but I want to be able to enter bajillions of words with large bits of data associated.  So, I've forked the project to switch both indexes and datum to 32-bit.  So you can enter... a lot of information now.  You can find my fork at http://github.com/tyler/libdatrie.
-
-h2. Bugs
-
-Saving to disk doesn't work correctly.  Not sure why... maybe related to my libdatrie changes.
 
 
 Copyright (c) 2008 Tyler McMullen. See LICENSE for details.
