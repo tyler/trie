@@ -5,3 +5,5 @@
 Makefile
 .DS_Store
 coverage
+*~
+#*
