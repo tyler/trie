@@ -2,15 +2,15 @@
 
 Gem::Specification.new do |s|
   s.name = %q{trie}
-  s.version = "0.2.3"
+  s.version = "0.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tyler McMullen"]
-  s.date = %q{2009-03-14}
+  s.date = %q{2009-04-16}
   s.description = %q{TODO}
   s.email = %q{tyler@scribd.com}
-  s.extensions = ["ext/trie/extconf.rb"]
-  s.files = ["README.textile", "VERSION.yml", "lib/trie.rb", "spec/test-trie", "spec/test-trie/README", "spec/trie_spec.rb", "ext/Makefile", "ext/trie", "ext/trie/extconf.rb", "ext/trie/Makefile", "ext/trie/trie.c"]
+  s.extensions = ["ext/extconf.rb"]
+  s.files = ["README.textile", "VERSION.yml", "lib/trie.rb", "spec/trie_spec.rb", "ext/darray.c", "ext/darray.h", "ext/darray.o", "ext/extconf.rb", "ext/fileutils.c", "ext/fileutils.h", "ext/fileutils.o", "ext/Makefile", "ext/tail.c", "ext/tail.h", "ext/tail.o", "ext/trie-private.c", "ext/trie-private.h", "ext/trie-private.o", "ext/trie.bundle", "ext/trie.c", "ext/trie.h", "ext/trie.o", "ext/triedefs.h"]
   s.homepage = %q{http://github.com/tyler/trie}
   s.require_paths = ["lib", "ext"]
   s.rubygems_version = %q{1.3.1}
