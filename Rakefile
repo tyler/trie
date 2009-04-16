@@ -9,10 +9,10 @@ begin
     s.summary = "TODO"
     s.email = "tyler@scribd.com"
     s.homepage = "http://github.com/tyler/trie"
-    s.description = "TODO"
+    s.description = "Ruby Trie based on libdatrie."
     s.authors = ["Tyler McMullen"]
-    s.extensions = ['ext/extconf.rb']
-    s.require_paths << 'ext'
+    s.extensions = ['ext/trie/extconf.rb']
+    s.require_paths = ['ext','lib']
     s.files = FileList["[A-Z]*.*", "{lib,spec,ext}/**/*"]
   end
 rescue LoadError
