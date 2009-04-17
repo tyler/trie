@@ -44,7 +44,7 @@ Or if you have some integer data to store along with the words, such as weights 
   end
 </code></pre>
 
-Great, so we've populated our trie with some words.  (Note the limitations section below.)  Let's make sure those words are really there.
+Great, so we've populated our trie with some words. Let's make sure those words are really there.
 
 <pre><code>
   trie.has_key?('widget')  #=> true
