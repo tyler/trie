@@ -16,7 +16,7 @@ static VALUE rb_trie_has_key(VALUE self, VALUE key) {
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-    if(trie_retrieve(trie, (TrieChar*)RSTRING(key)->ptr, NULL))
+    if(trie_has_key(trie, (TrieChar*)RSTRING(key)->ptr))
 		return Qtrue;
     else
 		return Qnil;
@@ -230,6 +230,15 @@ static VALUE rb_trie_root(VALUE self) {
     return trie_node;
 }
 
+static VALUE rb_trie_node_initialize_copy(VALUE self, VALUE from) {
+	RDATA(self)->data = trie_state_clone(RDATA(from)->data);
+    
+    rb_iv_set(self, "@state", rb_iv_get(from, "@state"));
+    rb_iv_set(self, "@full_state", rb_iv_get(from, "@full_state"));
+
+    return self;
+}
+
 static VALUE rb_trie_node_get_state(VALUE self) {
     return rb_iv_get(self, "@state");
 }
@@ -251,6 +260,27 @@ static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
 		VALUE full_state = rb_iv_get(self, "@full_state");
 		rb_str_append(full_state, rchar);
 		rb_iv_set(self, "@full_state", full_state);
+		return self;
+    } else
+		return Qnil;
+}
+
+static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
+	VALUE new_node = rb_funcall(self, rb_intern("dup"), 0);
+
+    TrieState *state;
+    Data_Get_Struct(new_node, TrieState, state);
+
+    if(RSTRING(rchar)->len != 1)
+		return Qnil;
+
+    Bool result = trie_state_walk(state, *RSTRING(rchar)->ptr);
+    
+    if(result) {
+		rb_iv_set(new_node, "@state", rchar);
+		VALUE full_state = rb_iv_get(new_node, "@full_state");
+		rb_str_append(full_state, rchar);
+		rb_iv_set(new_node, "@full_state", full_state);
 		return self;
     } else
 		return Qnil;
@@ -284,22 +314,6 @@ static VALUE rb_trie_node_leaf(VALUE self) {
     return trie_state_is_leaf(state) ? Qtrue : Qnil;
 }
 
-static VALUE rb_trie_node_clone(VALUE self) {
-    TrieState *state;
-    Data_Get_Struct(self, TrieState, state);
-    
-    VALUE new_node = rb_trie_node_alloc(cTrieNode);
-
-	TrieState *new_state = trie_state_clone(state);
-
-    RDATA(new_node)->data = new_state;
-    
-    rb_iv_set(new_node, "@state", rb_iv_get(self, "@state"));
-    rb_iv_set(new_node, "@full_state", rb_iv_get(self, "@full_state"));
-
-    return new_node;
-}
-
  
 void Init_trie() {
     cTrie = rb_define_class("Trie", rb_cObject);
@@ -317,11 +331,12 @@ void Init_trie() {
 
     cTrieNode = rb_define_class("TrieNode", rb_cObject);
     rb_define_alloc_func(cTrieNode, rb_trie_node_alloc);
+	rb_define_method(cTrieNode, "initialize_copy", rb_trie_node_initialize_copy, 1);
     rb_define_method(cTrieNode, "state", rb_trie_node_get_state, 0);
     rb_define_method(cTrieNode, "full_state", rb_trie_node_get_full_state, 0);
     rb_define_method(cTrieNode, "walk!", rb_trie_node_walk_bang, 1);
+    rb_define_method(cTrieNode, "walk", rb_trie_node_walk, 1);
     rb_define_method(cTrieNode, "value", rb_trie_node_value, 0);
     rb_define_method(cTrieNode, "terminal?", rb_trie_node_terminal, 0);
     rb_define_method(cTrieNode, "leaf?", rb_trie_node_leaf, 0);
-    rb_define_method(cTrieNode, "clone", rb_trie_node_clone, 0);
 }

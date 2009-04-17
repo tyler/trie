@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../ext/trie'
+require File.dirname(__FILE__) + '/../ext/trie/trie'
 
 describe Trie do
   before :each do
@@ -193,6 +193,18 @@ describe TrieNode do
       @node.walk!('q').should be_nil
     end
   end
+
+  describe :walk do
+    it 'returns a new node object when the walk succeeds' do
+      other = @node.walk('r')
+      other.should != @node
+    end
+
+    it 'returns nil when the walk fails' do
+      @node.walk('q').should be_nil
+    end
+  end
+
 
   describe :value do
     it 'returns nil when the node is not terminal' do

@@ -102,6 +102,34 @@ Bool trie_store (Trie *trie, const TrieChar *key, TrieData data) {
 }
 
 
+Bool trie_has_key (const Trie *trie, const TrieChar *key) {
+    TrieIndex        s;
+    short            suffix_idx;
+    const TrieChar *p;
+
+    /* walk through branches */
+    s = da_get_root (trie->da);
+    for (p = key; !trie_da_is_separate (trie->da, s); p++) {
+        if (!da_walk (trie->da, &s, *p))
+            return FALSE;
+        if (0 == *p)
+            break;
+    }
+
+    /* walk through tail */
+    s = trie_da_get_tail_index (trie->da, s);
+    suffix_idx = 0;
+    for ( ; ; p++) {
+        if (!tail_walk_char (trie->tail, s, &suffix_idx, *p))
+            return FALSE;
+        if (0 == *p)
+            break;
+    }
+
+    return TRUE;
+}
+
+
 Bool trie_retrieve (const Trie *trie, const TrieChar *key, TrieData *o_data) {
     TrieIndex        s;
     short            suffix_idx;
