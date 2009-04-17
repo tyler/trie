@@ -8,7 +8,7 @@
 #ifndef __TRIEDEFS_H
 #define __TRIEDEFS_H
 
-#include <datrie/typedefs.h>
+#include "typedefs.h"
 
 /**
  * @file triedefs.h
