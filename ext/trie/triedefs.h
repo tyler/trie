@@ -60,7 +60,7 @@ typedef int32          TrieIndex;
 /**
  * @brief Type of value associated to trie entries
  */
-typedef int32          TrieData;
+typedef unsigned long TrieData;
 /**
  * @brief Trie error data
  */

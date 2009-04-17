@@ -28,7 +28,7 @@ static VALUE rb_trie_get(VALUE self, VALUE key) {
 
 	TrieData data;
     if(trie_retrieve(trie, (TrieChar*)RSTRING(key)->ptr, &data))
-		return INT2FIX(data);
+		return (VALUE)data;
     else
 		return Qnil;
 }
@@ -43,7 +43,7 @@ static VALUE rb_trie_add(VALUE self, VALUE args) {
 
     VALUE key;
     key = RARRAY(args)->ptr[0];
-    TrieData value = size == 2 ? NUM2INT(RARRAY(args)->ptr[1]) : TRIE_DATA_ERROR;
+    TrieData value = size == 2 ? RARRAY(args)->ptr[1] : TRIE_DATA_ERROR;
     
     if(trie_store(trie, (TrieChar*)RSTRING(key)->ptr, value))
 		return Qtrue;
@@ -148,7 +148,7 @@ static VALUE walk_all_paths_with_values(Trie *trie, VALUE children, TrieState *s
 				rb_ary_push(tuple, rb_str_new2(word));
 
 				TrieData trie_data = trie_state_get_data(end_state);
-				rb_ary_push(tuple, INT2FIX(trie_data));
+				rb_ary_push(tuple, (VALUE)trie_data);
 				rb_ary_push(children, tuple);
  
 				trie_state_free(end_state);
@@ -194,7 +194,7 @@ static VALUE rb_trie_children_with_values(VALUE self, VALUE prefix) {
 		VALUE tuple = rb_ary_new();
 		rb_ary_push(tuple, prefix);
 		TrieData trie_data = trie_state_get_data(end_state);
-		rb_ary_push(tuple, INT2FIX(trie_data));
+		rb_ary_push(tuple, (VALUE)trie_data);
 		rb_ary_push(children, tuple);
 
 		trie_state_free(end_state);
@@ -297,7 +297,7 @@ static VALUE rb_trie_node_value(VALUE self) {
     TrieData trie_data = trie_state_get_data(dup);
     trie_state_free(dup);
 
-    return TRIE_DATA_ERROR == trie_data ? Qnil : INT2FIX(trie_data);
+    return TRIE_DATA_ERROR == trie_data ? Qnil : (VALUE)trie_data;
 }
 
 static VALUE rb_trie_node_terminal(VALUE self) {
@@ -318,8 +318,6 @@ static VALUE rb_trie_node_leaf(VALUE self) {
 void Init_trie() {
     cTrie = rb_define_class("Trie", rb_cObject);
     rb_define_alloc_func(cTrie, rb_trie_alloc);
-    //rb_define_method(cTrie, "initialize", rb_trie_initialize, -2);
-    //rb_define_method(cTrie, "path", rb_trie_get_path, 0);
     rb_define_method(cTrie, "has_key?", rb_trie_has_key, 1);
     rb_define_method(cTrie, "get", rb_trie_get, 1);
     rb_define_method(cTrie, "add", rb_trie_add, -2);
@@ -327,7 +325,6 @@ void Init_trie() {
     rb_define_method(cTrie, "children", rb_trie_children, 1);
     rb_define_method(cTrie, "children_with_values", rb_trie_children_with_values, 1);
     rb_define_method(cTrie, "root", rb_trie_root, 0);
-    //rb_define_method(cTrie, "save", rb_trie_save, 0);
 
     cTrieNode = rb_define_class("TrieNode", rb_cObject);
     rb_define_alloc_func(cTrieNode, rb_trie_node_alloc);
