@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>File: README.textile</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href=".././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+  <div id="fileHeader">
+    <h1>README.textile</h1>
+    <table class="header-table">
+    <tr class="top-aligned-row">
+      <td><strong>Path:</strong></td>
+      <td>README.textile
+      </td>
+    </tr>
+    <tr class="top-aligned-row">
+      <td><strong>Last Update:</strong></td>
+      <td>Sat Apr 18 12:07:20 -0700 2009</td>
+    </tr>
+    </table>
+  </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+    <div id="description">
+      <p>
+h1. <a href="../classes/Trie.html">Trie</a>
+</p>
+<p>
+This is a trie for Ruby using libdatrie. It uses a dual-array system,
+meaning it has best-in-class memory usage and search time.
+</p>
+<p>
+h2. What is a trie?
+</p>
+<p>
+I suck at explaining things. Wikipedia doesn&#8216;t. <a
+href="http://wikipedia.org/wiki/Trie">wikipedia.org/wiki/Trie</a>.
+</p>
+<p>
+But in short a trie is a data structure that holds strings in a tree. So if
+you inserted the words &#8216;arc&#8217;, &#8216;ark&#8217;, and
+&#8216;ape&#8217; in a trie you could visualize it thusly:
+</p>
+<p>
+&lt;pre&gt;
+</p>
+<pre>
+      p - e
+    /
+  a - r - c
+        \
+          k
+</pre>
+<p>
+&lt;/pre&gt;
+</p>
+<p>
+It&#8216;s easy to see how this can have pretty neat implications for
+things like searching through lists of strings, sorting lists of strings,
+and things like spelling correction and autocompletion.
+</p>
+<p>
+h2. Tutorial
+</p>
+<p>
+Let&#8216;s go through building a simple autocompleter using <a
+href="../classes/Trie.html">Trie</a>.
+</p>
+<p>
+&lt;pre&gt;&lt;code&gt;
+</p>
+<pre>
+  Trie.new
+</pre>
+<p>
+&lt;/code&gt;&lt;/pre&gt;
+</p>
+<p>
+Anyway. So we&#8216;ve created our blank trie. Now, since we&#8216;re
+creating an autocompleter, we&#8216;ll need to add some words into it. We
+do that simply with the add method.
+</p>
+<p>
+&lt;pre&gt;&lt;code&gt;
+</p>
+<pre>
+  words.each do |word|
+    trie.add word
+  end
+</pre>
+<p>
+&lt;/code&gt;&lt;/pre&gt;
+</p>
+<p>
+Or if you have some integer data to store along with the words, such as
+weights or scores of some kind, you&#8216;d do it like so&#8230;
+</p>
+<p>
+&lt;pre&gt;&lt;code&gt;
+</p>
+<pre>
+  words_and_weights do |word,weight|
+    trie.add word, weight
+  end
+</pre>
+<p>
+&lt;/code&gt;&lt;/pre&gt;
+</p>
+<p>
+Great, so we&#8216;ve populated our trie with some words. Let&#8216;s make
+sure those words are really there.
+</p>
+<p>
+&lt;pre&gt;&lt;code&gt;
+</p>
+<pre>
+  trie.has_key?('widget')  #=&gt; true
+
+  trie.get('widget')  #=&gt; -1 or your value
+
+  trie.get('not-in-the-trie')  #=&gt; nil
+</pre>
+<p>
+&lt;/code&gt;&lt;/pre&gt;
+</p>
+<p>
+If you didn&#8216;t enter a value to go along with the word, calling
+<tt>get</tt> with it will return -1.
+</p>
+<p>
+Okay great, we have our populated trie, we&#8216;ve confirmed that the keys
+are in there. Let&#8216;s make an autocompleter! For this we&#8216;ll need
+to use the <tt>children</tt> method. We&#8216;ll do this as a simple Rails
+action, with the assumption you&#8216;ve initialized the trie into
+<tt>TRIE</tt>.
+</p>
+<p>
+&lt;pre&gt;&lt;code&gt;
+</p>
+<pre>
+  def autocomplete
+    children = TRIE.children(params[:prefix])
+
+    respond_to do |format|
+      format.js { render(:string =&gt; JSON.dump(children)) }
+      format.yaml { render(:string =&gt; YAML.dump(children)) }
+    end
+  end
+</pre>
+<p>
+&lt;/code&gt;&lt;/pre&gt;
+</p>
+<p>
+Yep, that&#8216;s it.
+</p>
+<p>
+There are, of course, some more interesting and advanced ways to use a
+trie. For instance, this snippet take a string, then walks down the trie,
+noting each word it finds along the way.
+</p>
+<p>
+&lt;pre&gt;&lt;code&gt;
+</p>
+<pre>
+  word = 'forestry'
+  node = trie.root
+
+  word.split('').each do |char|
+    break unless node.walk!(char)
+    if node.terminal?
+      puts &quot;Found me a word: #{node.full_state}&quot;
+    end
+  end
+</pre>
+<p>
+&lt;/code&gt;&lt;/pre&gt;
+</p>
+<p>
+By calling <tt>root</tt> on a <a href="../classes/Trie.html">Trie</a>
+object, you get a <a href="../classes/TrieNode.html">TrieNode</a>, pointed
+at the root of the trie. You can then use this node to walk the trie and
+perceive things about each word.
+</p>
+<p>
+h2. Performance Characteristics
+</p>
+<p>
+Here are some quick benchmarks on my 2.4ghz Intel Core 2 Duo MacBook Pro:
+</p>
+<p>
+For keys that are 5 characters long: 31,344 adds/second 1,827,408
+searches/second 38,453 prefixes searches/second
+</p>
+<p>
+For keys that are 10 characters long: 30,653 adds/second 1,802,649
+searches/second 13,553 prefix searches/second
+</p>
+<p>
+For keys that are 20 characters long: 30,488 adds/second 1,851,461
+searches/second 5,855 prefix searches/second
+</p>
+<p>
+For keys that are 40 characters long: 30,710 adds/second 1,838,380
+searches/second 2,762 prefix searches/second
+</p>
+<p>
+There are a few takeaways from this. First, there is no strong correlation
+between length of keys and insert or retrieve time. They stay fairly
+constant as the length of keys increase. Secondly, doing prefix searches
+with this trie gets slower linearly with the length of the keys in the
+trie.
+</p>
+<p>
+This points to a limitation of this type of trie. It is based on libdatrie,
+which is a dual-array trie. When finding branches from a particular node,
+we must query all possible branches to determine whether or not they exist.
+So for each node we do 255 of these queries.
+</p>
+<p>
+There may be some tricks to speed this up, but for now it is simply a
+limitation of this trie.
+</p>
+<p>
+Now, let&#8216;s look at the effect of the size of the trie itself on query
+and insertion time. For this test I inserted 100, 1000, 10000, 100000, and
+1000000 words in the trie. We measure the insertion and retrieval time in
+each. The graph below shows the results.
+</p>
+<p>
+!<img src="http://codehallow.com/effect_of_size.png" />!
+</p>
+<p>
+So, keeping in mind that we&#8216;re increasing by orders of magnitude, you
+can see that the insertion time does take a signifcant hit. Retrieval also
+goes down but at a very gradual rate. (It decreases by about 50% in total,
+despite the size increasing by 1,000,000%.)
+</p>
+<p>
+The reason the insertion times takes such a beating is due, again, to a
+limitation of the trie. Storing a trie in the dual array setup that is used
+is excellent for memory usage and retrieval time. Best in class, in fact.
+However, the more things are added into the trie the more complicated it
+gets to insert things. It often requires shuffling large pieces of the
+arrays. There may be room for optimization here, but ultimately insertion
+time will increase with the size of the trie.
+</p>
+<p>
+Copyright (c) 2008 Tyler McMullen. See LICENSE for details.
+</p>
+
+    </div>
+
+
+   </div>
+
+
+  </div>
+
+
+    <!-- if includes -->
+
+    <div id="section">
+
+
+
+
+
+      
+
+
+    <!-- if method_list -->
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>
