@@ -88,4 +88,45 @@ There are, of course, some more interesting and advanced ways to use a trie.  Fo
 By calling <code>root</code> on a Trie object, you get a TrieNode, pointed at the root of the trie.  You can then use this node to walk the trie and perceive things about each word.
 
 
+h2. Performance Characteristics
+
+Here are some quick benchmarks on my 2.4ghz Intel Core 2 Duo MacBook Pro:
+
+For keys that are 5 characters long:
+31,344 adds/second
+1,827,408 searches/second
+38,453 prefixes searches/second
+
+For keys that are 10 characters long:
+30,653 adds/second
+1,802,649 searches/second
+13,553 prefix searches/second
+
+For keys that are 20 characters long:
+30,488 adds/second
+1,851,461 searches/second
+5,855 prefix searches/second
+
+For keys that are 40 characters long:
+30,710 adds/second
+1,838,380 searches/second
+2,762 prefix searches/second
+
+
+There are a few takeaways from this. First, there is no strong correlation between length of keys and insert or retrieve time. They stay fairly constant as the length of keys increase. Secondly, doing prefix searches with this trie gets slower linearly with the length of the keys in the trie.
+
+This points to a limitation of this type of trie.  It is based on libdatrie, which is a dual-array trie.  When finding branches from a particular node, we must query all possible branches to determine whether or not they exist.  So for each node we do 255 of these queries.
+
+There may be some tricks to speed this up, but for now it is simply a limitation of this trie.
+
+Now, let's look at the effect of the size of the trie itself on query and insertion time.  For this test I inserted 100, 1000, 10000, 100000, and 1000000 words in the trie.  We measure the insertion and retrieval time in each.  The graph below shows the results.
+
+!http://codehallow.com/effect_of_size.png!
+
+So, keeping in mind that we're increasing by orders of magnitude, you can see that the insertion time does take a signifcant hit.  Retrieval also goes down but at a very gradual rate.  (It decreases by about 50% in total, despite the size increasing by 1,000,000%.)
+
+The reason the insertion times takes such a beating is due, again, to a limitation of the trie.  Storing a trie in the dual array setup that is used is excellent for memory usage and retrieval time.  Best in class, in fact. However, the more things are added into the trie the more complicated it gets to insert things.  It often requires shuffling large pieces of the arrays.  There may be room for optimization here, but ultimately insertion time will increase with the size of the trie.
+
+
+
 Copyright (c) 2008 Tyler McMullen. See LICENSE for details.
