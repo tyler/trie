@@ -6,12 +6,27 @@
 
 VALUE cTrie, cTrieNode;
 
+/*
+ * Document-class: Trie
+ * 
+ * A key-value data structure for string keys which is efficient memory usage and fast retrieval time.
+ *
+ */
+
 static VALUE rb_trie_alloc(VALUE klass) {
 	VALUE obj;
 	obj = Data_Wrap_Struct(klass, 0, trie_free, trie_new());
 	return obj;
 }
 
+/*
+ * call-seq:
+ *   has_key?(key) -> true/false
+ *
+ * Determines whether or not a key exists in the Trie.  Use this if you don't care about the value, as it
+ * is marginally faster than Trie#get.
+ *
+ */
 static VALUE rb_trie_has_key(VALUE self, VALUE key) {
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
@@ -22,6 +37,14 @@ static VALUE rb_trie_has_key(VALUE self, VALUE key) {
 		return Qnil;
 }
 
+/*
+ * call-seq:
+ *   get(key) -> value
+ *   [key]    -> value
+ *
+ * Retrieves the value for a particular key (or nil) from the Trie.
+ *
+ */
 static VALUE rb_trie_get(VALUE self, VALUE key) {
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
@@ -33,6 +56,14 @@ static VALUE rb_trie_get(VALUE self, VALUE key) {
 		return Qnil;
 }
 
+/*
+ * call-seq:
+ *   add(key)
+ *   add(key,value)
+ *
+ * Add a key, or a key and value to the Trie.  If you add a key without a value it assumes true for the value. 
+ *
+ */
 static VALUE rb_trie_add(VALUE self, VALUE args) {
 	Trie *trie;
     Data_Get_Struct(self, Trie, trie);
@@ -51,6 +82,13 @@ static VALUE rb_trie_add(VALUE self, VALUE args) {
 		return Qnil;
 }
 
+/*
+ * call-seq:
+ *   delete(key)
+ *
+ * Delete a key from the Trie.  Returns true if it deleted a key, nil otherwise.
+ *
+ */
 static VALUE rb_trie_delete(VALUE self, VALUE key) {
 	Trie *trie;
     Data_Get_Struct(self, Trie, trie);
@@ -59,14 +97,6 @@ static VALUE rb_trie_delete(VALUE self, VALUE key) {
 		return Qtrue;
     else
 		return Qnil;
-}
-
-char* append_char(char* existing, int size, char c) {
-	char *new = (char*) malloc(size + 2);
-	memcpy(new, existing, size);
-	new[size] = c;
-	new[size + 1] = 0;
-	return new;
 }
 
 static VALUE walk_all_paths(Trie *trie, VALUE children, TrieState *state, char *prefix, int prefix_size) {
@@ -93,6 +123,13 @@ static VALUE walk_all_paths(Trie *trie, VALUE children, TrieState *state, char *
     }
 }
 
+/*
+ * call-seq:
+ *   children(prefix) -> [ key, ... ]
+ *
+ * Finds all keys in the Trie beginning with the given prefix. 
+ *
+ */
 static VALUE rb_trie_children(VALUE self, VALUE prefix) {
     if(NIL_P(prefix))
 		return rb_ary_new();
@@ -162,9 +199,13 @@ static VALUE walk_all_paths_with_values(Trie *trie, VALUE children, TrieState *s
     }
 }
 
-
-
-
+/*
+ * call-seq:
+ *   children_with_values(key) -> [ [key,value], ... ]
+ *
+ * Finds all keys with their respective values in the Trie beginning with the given prefix. 
+ * 
+ */
 static VALUE rb_trie_children_with_values(VALUE self, VALUE prefix) {
     if(NIL_P(prefix))
 		return rb_ary_new();
@@ -210,12 +251,15 @@ static VALUE rb_trie_children_with_values(VALUE self, VALUE prefix) {
     return children;
 }
 
-static VALUE rb_trie_node_alloc(VALUE klass) {
-    VALUE obj;
-    obj = Data_Wrap_Struct(klass, 0, trie_state_free, NULL);
-    return obj;
-}
+static VALUE rb_trie_node_alloc(VALUE klass);
 
+/*
+ * call-seq:
+ *   root -> TrieNode
+ *
+ * Returns a TrieNode representing the root of the Trie.
+ *
+ */
 static VALUE rb_trie_root(VALUE self) {
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
@@ -230,6 +274,22 @@ static VALUE rb_trie_root(VALUE self) {
     return trie_node;
 }
 
+
+/*
+ * Document-class: TrieNode
+ * 
+ * Represents a single node in the Trie. It can be used as a cursor to walk around the Trie.
+ * You can grab a TrieNode for the root of the Trie by using Trie#root.
+ *
+ */
+
+static VALUE rb_trie_node_alloc(VALUE klass) {
+    VALUE obj;
+    obj = Data_Wrap_Struct(klass, 0, trie_state_free, NULL);
+    return obj;
+}
+
+/* nodoc */
 static VALUE rb_trie_node_initialize_copy(VALUE self, VALUE from) {
 	RDATA(self)->data = trie_state_clone(RDATA(from)->data);
     
@@ -239,13 +299,36 @@ static VALUE rb_trie_node_initialize_copy(VALUE self, VALUE from) {
     return self;
 }
 
+/*
+ * call-seq:
+ *   state -> single character
+ *
+ * Returns the letter that the TrieNode instance points to. So, if the node is pointing at the "e" in "monkeys", the state is "e".
+ *
+ */
 static VALUE rb_trie_node_get_state(VALUE self) {
     return rb_iv_get(self, "@state");
 }
+
+/*
+ * call-seq:
+ *   full_state -> string
+ *
+ * Returns the full string from the root of the Trie up to this node.  So if the node pointing at the "e" in "monkeys",
+ * the full_state is "monke".
+ *
+ */
 static VALUE rb_trie_node_get_full_state(VALUE self) {
     return rb_iv_get(self, "@full_state");
 }
 
+/*
+ * call-seq:
+ *   walk!(letter) -> TrieNode
+ *
+ * Tries to walk down a particular branch of the Trie.  It modifies the node it is called on.
+ *
+ */
 static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
     TrieState *state;
     Data_Get_Struct(self, TrieState, state);
@@ -265,6 +348,14 @@ static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
 		return Qnil;
 }
 
+/*
+ * call-seq:
+ *   walk(letter) -> TrieNode
+ *
+ * Tries to walk down a particular branch of the Trie.  It clones the node it is called on and 
+ * walks with that one, leaving the original unchanged.
+ *
+ */
 static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
 	VALUE new_node = rb_funcall(self, rb_intern("dup"), 0);
 
@@ -286,6 +377,14 @@ static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
 		return Qnil;
 }
 
+/*
+ * call-seq:
+ *   value
+ *
+ * Attempts to get the value at this node of the Trie.  This only works if the node is a terminal 
+ * (i.e. end of a key), otherwise it returns nil.
+ *
+ */
 static VALUE rb_trie_node_value(VALUE self) {
     TrieState *state;
 	TrieState *dup;
@@ -300,6 +399,14 @@ static VALUE rb_trie_node_value(VALUE self) {
     return TRIE_DATA_ERROR == trie_data ? Qnil : (VALUE)trie_data;
 }
 
+/*
+ * call-seq:
+ *   terminal? -> true/false
+ *
+ * Returns true if this node is at the end of a key.  So if you have two keys in your Trie, "he" and
+ * "hello", and you walk all the way to the end of "hello", the "e" and the "o" will return true for terminal?.
+ *
+ */
 static VALUE rb_trie_node_terminal(VALUE self) {
     TrieState *state;
     Data_Get_Struct(self, TrieState, state);
@@ -307,6 +414,12 @@ static VALUE rb_trie_node_terminal(VALUE self) {
     return trie_state_is_terminal(state) ? Qtrue : Qnil;
 }
 
+/*
+ * call-seq:
+ *   leaf? -> true/false
+ *
+ * Returns true if there are no branches at this node.
+ */
 static VALUE rb_trie_node_leaf(VALUE self) {
     TrieState *state;
     Data_Get_Struct(self, TrieState, state);
