@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description = %q{Ruby Trie based on libdatrie.}
   s.email = %q{tyler@scribd.com}
   s.extensions = ["ext/trie/extconf.rb"]
-  s.files = ["README.textile", "VERSION.yml", "lib/trie.rb", "spec/trie_spec.rb", "ext/trie", "ext/trie/darray.c", "ext/trie/darray.h", "ext/trie/darray.o", "ext/trie/extconf.rb", "ext/trie/fileutils.c", "ext/trie/fileutils.h", "ext/trie/fileutils.o", "ext/trie/Makefile", "ext/trie/tail.c", "ext/trie/tail.h", "ext/trie/tail.o", "ext/trie/trie-private.c", "ext/trie/trie-private.h", "ext/trie/trie-private.o", "ext/trie/trie.bundle", "ext/trie/trie.c", "ext/trie/trie.h", "ext/trie/trie.o", "ext/trie/triedefs.h", "ext/trie/typedefs.h"]
+  s.files = ["README.textile", "VERSION.yml", "lib/trie.rb", "spec/trie_spec.rb", "ext/trie", "ext/trie/darray.c", "ext/trie/darray.h", "ext/trie/extconf.rb", "ext/trie/fileutils.c", "ext/trie/fileutils.h", "ext/trie/Makefile", "ext/trie/tail.c", "ext/trie/tail.h", "ext/trie/trie-private.c", "ext/trie/trie-private.h", "ext/trie/trie.bundle", "ext/trie/trie.c", "ext/trie/trie.h", "ext/trie/triedefs.h", "ext/trie/typedefs.h"]
   s.has_rdoc = true
   s.homepage = %q{http://github.com/tyler/trie}
   s.rdoc_options = ["--title", "Trie", "--line-numbers", "--op", "rdoc", "--main", "ext/trie/trie.c", "README"]
