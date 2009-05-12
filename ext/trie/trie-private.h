@@ -8,7 +8,7 @@
 #ifndef __TRIE_PRIVATE_H
 #define __TRIE_PRIVATE_H
 
-#include "datrie/typedefs.h"
+#include "typedefs.h"
 
 /**
  * @file trie-private.h
