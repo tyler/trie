@@ -28,6 +28,8 @@ static VALUE rb_trie_alloc(VALUE klass) {
  *
  */
 static VALUE rb_trie_has_key(VALUE self, VALUE key) {
+	StringValue(key);
+
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
@@ -46,6 +48,8 @@ static VALUE rb_trie_has_key(VALUE self, VALUE key) {
  *
  */
 static VALUE rb_trie_get(VALUE self, VALUE key) {
+	StringValue(key);
+
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
@@ -74,6 +78,8 @@ static VALUE rb_trie_add(VALUE self, VALUE args) {
 
     VALUE key;
     key = RARRAY(args)->ptr[0];
+	StringValue(key);
+
     TrieData value = size == 2 ? RARRAY(args)->ptr[1] : TRIE_DATA_ERROR;
     
     if(trie_store(trie, (TrieChar*)RSTRING(key)->ptr, value))
@@ -90,6 +96,8 @@ static VALUE rb_trie_add(VALUE self, VALUE args) {
  *
  */
 static VALUE rb_trie_delete(VALUE self, VALUE key) {
+	StringValue(key);
+
 	Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
@@ -133,6 +141,8 @@ static VALUE walk_all_paths(Trie *trie, VALUE children, TrieState *state, char *
 static VALUE rb_trie_children(VALUE self, VALUE prefix) {
     if(NIL_P(prefix))
 		return rb_ary_new();
+
+	StringValue(prefix);
 
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
@@ -209,6 +219,8 @@ static VALUE walk_all_paths_with_values(Trie *trie, VALUE children, TrieState *s
 static VALUE rb_trie_children_with_values(VALUE self, VALUE prefix) {
     if(NIL_P(prefix))
 		return rb_ary_new();
+
+	StringValue(prefix);
 
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
@@ -330,6 +342,8 @@ static VALUE rb_trie_node_get_full_state(VALUE self) {
  *
  */
 static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
+	StringValue(rchar);
+
     TrieState *state;
     Data_Get_Struct(self, TrieState, state);
 
@@ -357,6 +371,8 @@ static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
  *
  */
 static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
+	StringValue(rchar);
+
 	VALUE new_node = rb_funcall(self, rb_intern("dup"), 0);
 
     TrieState *state;

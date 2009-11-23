@@ -1,4 +1,6 @@
-require File.dirname(__FILE__) + '/../ext/trie/trie'
+#require File.dirname(__FILE__) + '/../ext/trie/trie'
+require 'rubygems'
+require 'trie'
 
 describe Trie do
   before :each do
