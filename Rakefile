@@ -5,11 +5,11 @@ require 'rake/rdoctask'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
-    s.name = "trie"
-    s.summary = "TODO"
+    s.name = "fast_trie"
     s.email = "tyler@scribd.com"
     s.homepage = "http://github.com/tyler/trie"
     s.description = "Ruby Trie based on libdatrie."
+    s.summary = s.description
     s.authors = ["Tyler McMullen"]
     s.extensions = ['ext/trie/extconf.rb']
     s.require_paths = ['ext','lib']
