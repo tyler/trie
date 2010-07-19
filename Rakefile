@@ -12,8 +12,8 @@ begin
     s.summary = s.description
     s.authors = ["Tyler McMullen"]
     s.extensions = ['ext/trie/extconf.rb']
-    s.require_paths = ['ext','lib']
-    s.files = FileList["[A-Z]*.*", "{lib,spec,ext}/**/*"]
+    s.require_paths = ['ext']
+    s.files = FileList["[A-Z]*.*", "{spec,ext}/**/*"]
     s.has_rdoc = true
     s.rdoc_options = ['--title', 'Trie', '--line-numbers', '--op', 'rdoc', '--main', 'ext/trie/trie.c', 'README']
   end
