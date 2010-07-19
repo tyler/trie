@@ -305,8 +305,11 @@ static VALUE rb_trie_node_alloc(VALUE klass) {
 static VALUE rb_trie_node_initialize_copy(VALUE self, VALUE from) {
 	RDATA(self)->data = trie_state_clone(RDATA(from)->data);
     
-    rb_iv_set(self, "@state", rb_iv_get(from, "@state"));
-    rb_iv_set(self, "@full_state", rb_iv_get(from, "@full_state"));
+    VALUE state = rb_iv_get(from, "@state");
+    rb_iv_set(self, "@state", state == Qnil ? Qnil : rb_str_dup(state));
+
+    VALUE full_state = rb_iv_get(from, "@full_state");
+    rb_iv_set(self, "@full_state", full_state == Qnil ? Qnil : rb_str_dup(full_state));
 
     return self;
 }
@@ -388,7 +391,7 @@ static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
 		VALUE full_state = rb_iv_get(new_node, "@full_state");
 		rb_str_append(full_state, rchar);
 		rb_iv_set(new_node, "@full_state", full_state);
-		return self;
+		return new_node;
     } else
 		return Qnil;
 }
