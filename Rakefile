@@ -33,4 +33,8 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('ext/trie/trie.c')
 end
 
+task :clean do
+  sh 'rm -fv ext/trie/*.o ext/trie/*.bundle ext/Makefile ext/trie/Makefile'
+end
+
 task :default => :spec
