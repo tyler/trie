@@ -1,6 +1,4 @@
-#require File.dirname(__FILE__) + '/../ext/trie/trie'
-require 'rubygems'
-require 'trie'
+require File.dirname(__FILE__) + '/../lib/trie'
 
 describe Trie do
   before :each do
@@ -204,7 +202,7 @@ describe TrieNode do
   describe :walk do
     it 'returns a new node object when the walk succeeds' do
       other = @node.walk('r')
-      other.should != @node
+      other.should_not == @node
     end
 
     it 'returns nil when the walk fails' do
