@@ -31,7 +31,7 @@ static VALUE rb_trie_read(VALUE self, VALUE filename_base) {
   StringValue(da_filename);
     
   VALUE tail_filename = rb_str_dup(filename_base);
-  rb_str_concat(da_filename, rb_str_new2(".tail"));
+  rb_str_concat(tail_filename, rb_str_new2(".tail"));
   StringValue(tail_filename);
 
   Trie *trie;
@@ -501,7 +501,7 @@ static VALUE rb_trie_save(VALUE self, VALUE filename_base) {
   StringValue(da_filename);
     
   VALUE tail_filename = rb_str_dup(filename_base);
-  rb_str_concat(da_filename, rb_str_new2(".tail"));
+  rb_str_concat(tail_filename, rb_str_new2(".tail"));
   StringValue(tail_filename);
 
   Trie *trie;
