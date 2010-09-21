@@ -19,6 +19,11 @@ static VALUE rb_trie_alloc(VALUE klass) {
 	return obj;
 }
 
+void raise_ioerror(const char * message) {
+    VALUE rb_eIOError = rb_const_get(rb_cObject, rb_intern("IOError"));
+    rb_raise(rb_eIOError, message);
+}
+
 /*
  * call-seq:
  *   read(filename_base) -> Trie
@@ -34,8 +39,7 @@ static VALUE rb_trie_read(VALUE self, VALUE filename_base) {
   rb_str_concat(tail_filename, rb_str_new2(".tail"));
   StringValue(tail_filename);
 
-  Trie *trie;
-  trie = trie_new();
+  Trie *trie = trie_new();
 
   VALUE obj;
   obj = Data_Wrap_Struct(self, 0, trie_free, trie);
@@ -43,22 +47,24 @@ static VALUE rb_trie_read(VALUE self, VALUE filename_base) {
   DArray *old_da = trie->da;
   Tail *old_tail = trie->tail;
 
-  FILE *da_file = fopen(RSTRING(da_filename)->ptr, "r");
+  FILE *da_file = fopen(RSTRING_PTR(da_filename), "r");
   if (da_file == NULL)
-    rb_raise(rb_eval_string("IOError"), "Error reading .da file.");
+    raise_ioerror("Error reading .da file.");
+
   trie->da = da_read(da_file);
   fclose(da_file);
 
-  FILE *tail_file = fopen(RSTRING(tail_filename)->ptr, "r");
+  FILE *tail_file = fopen(RSTRING_PTR(tail_filename), "r");
   if (tail_file == NULL)
-    rb_raise(rb_eval_string("IOError"), "Error reading .tail file.");
+    raise_ioerror("Error reading .tail file.");
+
   trie->tail = tail_read(tail_file);
   fclose(tail_file);
 
   da_free(old_da);
   tail_free(old_tail);
 
-	return obj;
+  return obj;
 }
 
 /*
@@ -490,7 +496,7 @@ static VALUE rb_trie_node_leaf(VALUE self) {
 
 /*
  * call-seq:
- *   save(filename_base) -> true/false
+ *   save(filename_base) -> true
  *
  * Saves the trie data to two files, filename_base.da and filename_base.tail.
  * Returns true if saving was successful.
@@ -507,20 +513,21 @@ static VALUE rb_trie_save(VALUE self, VALUE filename_base) {
   Trie *trie;
   Data_Get_Struct(self, Trie, trie);
 
-  FILE *da_file = fopen(RSTRING(da_filename)->ptr, "w");
+  FILE *da_file = fopen(RSTRING_PTR(da_filename), "w");
   if (da_file == NULL)
-    rb_raise(rb_eval_string("IOError"), "Error opening .da file for writing.");
+    raise_ioerror("Error opening .da file for writing.");
   if (da_write(trie->da, da_file) != 0)
-    rb_raise(rb_eval_string("IOError"), "Error writing DArray data.");
+    raise_ioerror("Error writing DArray data.");
   fclose(da_file);
 
-  FILE *tail_file = fopen(RSTRING(tail_filename)->ptr, "w");
+  FILE *tail_file = fopen(RSTRING_PTR(tail_filename), "w");
   if (tail_file == NULL)
-    rb_raise(rb_eval_string("IOError"), "Error opening .tail file for writing.");
+    raise_ioerror("Error opening .tail file for writing.");
   if (tail_write(trie->tail, tail_file) != 0)
-    rb_raise(rb_eval_string("IOError"), "Error writing Tail data.");
+    raise_ioerror("Error writing Tail data.");
   fclose(tail_file);
-  return 1;
+
+  return Qtrue;
 }
 
  
