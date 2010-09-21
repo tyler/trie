@@ -21,6 +21,48 @@ static VALUE rb_trie_alloc(VALUE klass) {
 
 /*
  * call-seq:
+ *   read(filename_base) -> Trie
+ *
+ * Returns a new trie with data as read from disk.
+ */
+static VALUE rb_trie_read(VALUE self, VALUE filename_base) {
+  VALUE da_filename = rb_str_dup(filename_base);
+  rb_str_concat(da_filename, rb_str_new2(".da"));
+  StringValue(da_filename);
+    
+  VALUE tail_filename = rb_str_dup(filename_base);
+  rb_str_concat(da_filename, rb_str_new2(".tail"));
+  StringValue(tail_filename);
+
+  Trie *trie;
+  trie = trie_new();
+
+  VALUE obj;
+  obj = Data_Wrap_Struct(self, 0, trie_free, trie);
+
+  DArray *old_da = trie->da;
+  Tail *old_tail = trie->tail;
+
+  FILE *da_file = fopen(RSTRING(da_filename)->ptr, "r");
+  if (da_file == NULL)
+    rb_raise(rb_eval_string("IOError"), "Error reading .da file.");
+  trie->da = da_read(da_file);
+  fclose(da_file);
+
+  FILE *tail_file = fopen(RSTRING(tail_filename)->ptr, "r");
+  if (tail_file == NULL)
+    rb_raise(rb_eval_string("IOError"), "Error reading .tail file.");
+  trie->tail = tail_read(tail_file);
+  fclose(tail_file);
+
+  da_free(old_da);
+  tail_free(old_tail);
+
+	return obj;
+}
+
+/*
+ * call-seq:
  *   has_key?(key) -> true/false
  *
  * Determines whether or not a key exists in the Trie.  Use this if you don't care about the value, as it
@@ -446,10 +488,46 @@ static VALUE rb_trie_node_leaf(VALUE self) {
     return trie_state_is_leaf(state) ? Qtrue : Qnil;
 }
 
+/*
+ * call-seq:
+ *   save(filename_base) -> true/false
+ *
+ * Saves the trie data to two files, filename_base.da and filename_base.tail.
+ * Returns true if saving was successful.
+ */
+static VALUE rb_trie_save(VALUE self, VALUE filename_base) {
+  VALUE da_filename = rb_str_dup(filename_base);
+  rb_str_concat(da_filename, rb_str_new2(".da"));
+  StringValue(da_filename);
+    
+  VALUE tail_filename = rb_str_dup(filename_base);
+  rb_str_concat(da_filename, rb_str_new2(".tail"));
+  StringValue(tail_filename);
+
+  Trie *trie;
+  Data_Get_Struct(self, Trie, trie);
+
+  FILE *da_file = fopen(RSTRING(da_filename)->ptr, "w");
+  if (da_file == NULL)
+    rb_raise(rb_eval_string("IOError"), "Error opening .da file for writing.");
+  if (da_write(trie->da, da_file) != 0)
+    rb_raise(rb_eval_string("IOError"), "Error writing DArray data.");
+  fclose(da_file);
+
+  FILE *tail_file = fopen(RSTRING(tail_filename)->ptr, "w");
+  if (tail_file == NULL)
+    rb_raise(rb_eval_string("IOError"), "Error opening .tail file for writing.");
+  if (tail_write(trie->tail, tail_file) != 0)
+    rb_raise(rb_eval_string("IOError"), "Error writing Tail data.");
+  fclose(tail_file);
+  return 1;
+}
+
  
 void Init_trie() {
     cTrie = rb_define_class("Trie", rb_cObject);
     rb_define_alloc_func(cTrie, rb_trie_alloc);
+    rb_define_module_function(cTrie, "read", rb_trie_read, 1);
     rb_define_method(cTrie, "has_key?", rb_trie_has_key, 1);
     rb_define_method(cTrie, "get", rb_trie_get, 1);
     rb_define_method(cTrie, "add", rb_trie_add, -2);
@@ -457,10 +535,11 @@ void Init_trie() {
     rb_define_method(cTrie, "children", rb_trie_children, 1);
     rb_define_method(cTrie, "children_with_values", rb_trie_children_with_values, 1);
     rb_define_method(cTrie, "root", rb_trie_root, 0);
+    rb_define_method(cTrie, "save", rb_trie_save, 1);
 
     cTrieNode = rb_define_class("TrieNode", rb_cObject);
     rb_define_alloc_func(cTrieNode, rb_trie_node_alloc);
-	rb_define_method(cTrieNode, "initialize_copy", rb_trie_node_initialize_copy, 1);
+    rb_define_method(cTrieNode, "initialize_copy", rb_trie_node_initialize_copy, 1);
     rb_define_method(cTrieNode, "state", rb_trie_node_get_state, 0);
     rb_define_method(cTrieNode, "full_state", rb_trie_node_get_full_state, 0);
     rb_define_method(cTrieNode, "walk!", rb_trie_node_walk_bang, 1);

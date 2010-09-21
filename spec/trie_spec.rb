@@ -8,12 +8,6 @@ describe Trie do
     @trie.add('frederico')
   end
   
-  #describe :path do
-  #  it 'returns the correct path' do
-  #    @trie.path.should == TRIE_PATH
-  #  end
-  #end
-
   describe :has_key? do
     it 'returns true for words in the trie' do
       @trie.has_key?('rocket').should be_true
@@ -144,15 +138,37 @@ describe Trie do
     end
   end
 
-  #describe :save do
-  #  it 'saves the trie to disk such that another trie can be spawned which will read succesfully' do
-  #    @trie.add('omgwtf',123)
-  #    @trie.save
-  #
-  #    trie2 = Trie.new(TRIE_PATH)
-  #    trie2.get('omgwtf').should == 123
-  #  end
-  #end
+  describe 'save/read' do
+    let(:filename_base) do
+      dir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tmp'))
+      FileUtils.mkdir_p(dir)
+      File.join(dir, 'trie')
+    end
+    
+    context 'when I save the populated trie to disk' do
+      before(:each) do
+        @trie.add('omgwtflolbbq', 123)
+        @trie.save(filename_base)
+      end
+      
+      it 'should contain the same data when reading from disk' do
+        trie2 = Trie.read(filename_base)
+        trie2.get('omgwtflolbbq').should == 123
+      end
+    end
+  end
+  
+  describe :read do
+    context 'when the files to read from do not exist' do
+      let(:filename_base) do
+        "phantasy/file/path/that/does/not/exist"
+      end
+      
+      it 'should raise an error when attempting a read' do
+        lambda { Trie.read(filename_base) }.should raise_error(IOError)
+      end
+    end
+  end
 end
 
 describe TrieNode do
