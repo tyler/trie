@@ -81,7 +81,7 @@ static VALUE rb_trie_has_key(VALUE self, VALUE key) {
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-    if(trie_has_key(trie, (TrieChar*)RSTRING(key)->ptr))
+    if(trie_has_key(trie, (TrieChar*)RSTRING_PTR(key)))
 		return Qtrue;
     else
 		return Qnil;
@@ -102,7 +102,7 @@ static VALUE rb_trie_get(VALUE self, VALUE key) {
     Data_Get_Struct(self, Trie, trie);
 
 	TrieData data;
-    if(trie_retrieve(trie, (TrieChar*)RSTRING(key)->ptr, &data))
+    if(trie_retrieve(trie, (TrieChar*)RSTRING_PTR(key), &data))
 		return (VALUE)data;
     else
 		return Qnil;
@@ -120,17 +120,17 @@ static VALUE rb_trie_add(VALUE self, VALUE args) {
 	Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-    int size = RARRAY(args)->len;
+    int size = RARRAY_LEN(args);
     if(size < 1 || size > 2)
 		return Qnil;
 
     VALUE key;
-    key = RARRAY(args)->ptr[0];
+    key = RARRAY_PTR(args)[0];
 	StringValue(key);
 
-    TrieData value = size == 2 ? RARRAY(args)->ptr[1] : TRIE_DATA_ERROR;
+    TrieData value = size == 2 ? RARRAY_PTR(args)[1] : TRIE_DATA_ERROR;
     
-    if(trie_store(trie, (TrieChar*)RSTRING(key)->ptr, value))
+    if(trie_store(trie, (TrieChar*)RSTRING_PTR(key), value))
 		return Qtrue;
     else
 		return Qnil;
@@ -149,7 +149,7 @@ static VALUE rb_trie_delete(VALUE self, VALUE key) {
 	Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-    if(trie_delete(trie, (TrieChar*)RSTRING(key)->ptr))
+    if(trie_delete(trie, (TrieChar*)RSTRING_PTR(key)))
 		return Qtrue;
     else
 		return Qnil;
@@ -195,10 +195,10 @@ static VALUE rb_trie_children(VALUE self, VALUE prefix) {
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-	int prefix_size = RSTRING(prefix)->len;
+	int prefix_size = RSTRING_LEN(prefix);
     TrieState *state = trie_root(trie);
     VALUE children = rb_ary_new();
-	TrieChar *char_prefix = (TrieChar*)RSTRING(prefix)->ptr;
+	TrieChar *char_prefix = (TrieChar*)RSTRING_PTR(prefix);
     
     const TrieChar *iterator = char_prefix;
     while(*iterator != 0) {
@@ -273,8 +273,8 @@ static VALUE rb_trie_children_with_values(VALUE self, VALUE prefix) {
     Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-	int prefix_size = RSTRING(prefix)->len;
-    TrieChar *char_prefix = (TrieChar*)RSTRING(prefix)->ptr;
+	int prefix_size = RSTRING_LEN(prefix);
+    TrieChar *char_prefix = (TrieChar*)RSTRING_PTR(prefix);
     
     VALUE children = rb_ary_new();
 
@@ -398,10 +398,10 @@ static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
     TrieState *state;
     Data_Get_Struct(self, TrieState, state);
 
-    if(RSTRING(rchar)->len != 1)
+    if(RSTRING_LEN(rchar) != 1)
 		return Qnil;
 
-    Bool result = trie_state_walk(state, *RSTRING(rchar)->ptr);
+    Bool result = trie_state_walk(state, *RSTRING_PTR(rchar));
     
     if(result) {
 		rb_iv_set(self, "@state", rchar);
@@ -429,10 +429,10 @@ static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
     TrieState *state;
     Data_Get_Struct(new_node, TrieState, state);
 
-    if(RSTRING(rchar)->len != 1)
+    if(RSTRING_LEN(rchar) != 1)
 		return Qnil;
 
-    Bool result = trie_state_walk(state, *RSTRING(rchar)->ptr);
+    Bool result = trie_state_walk(state, *RSTRING_PTR(rchar));
     
     if(result) {
 		rb_iv_set(new_node, "@state", rchar);
