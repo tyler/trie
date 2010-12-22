@@ -1,5 +1,4 @@
 require 'rake'
-require 'spec/rake/spectask'
 require 'rake/rdoctask'
 
 begin
@@ -21,8 +20,12 @@ rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
 end
 
-Spec::Rake::SpecTask.new do |t|
-  t.spec_files = 'spec/**/*_spec.rb'
+begin
+  require 'spec/rake/spectask'
+  Spec::Rake::SpecTask.new do |t|
+    t.spec_files = 'spec/**/*_spec.rb'
+  end
+rescue LoadError
 end
 
 Rake::RDocTask.new do |rdoc|
