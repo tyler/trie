@@ -37,7 +37,7 @@ Rake::RDocTask.new do |rdoc|
 end
 
 task :clean do
-  sh 'rm -fv ext/trie/*.o ext/trie/*.bundle ext/Makefile ext/trie/Makefile'
+  sh 'rm -fv ext/*.{o,bundle} ext/trie/*.{o,bundle} ext/Makefile ext/trie/Makefile'
 end
 
 task :default => :spec
