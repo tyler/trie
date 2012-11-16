@@ -20,7 +20,7 @@ static VALUE rb_trie_alloc(VALUE klass) {
 }
 
 void raise_ioerror(const char * message) {
-    VALUE rb_eIOError = rb_const_get(rb_cObject, rb_intern("IOError"));
+    //VALUE rb_eIOError = rb_const_get(rb_cObject, rb_intern("IOError"));
     rb_raise(rb_eIOError, message);
 }
 
