@@ -13,7 +13,7 @@ require 'rake'
 
 require 'jeweler'
 
-Jeweler::Tasks.new do |s|
+jeweler_tasks = Jeweler::Tasks.new do |s|
     s.name = "fast_trie"
     s.email = "tyler@scribd.com"
     s.homepage = "http://github.com/tyler/trie"
@@ -28,19 +28,15 @@ Jeweler::Tasks.new do |s|
 end
 Jeweler::RubygemsDotOrgTasks.new
 
+$gemspec         = jeweler_tasks.gemspec
+$gemspec.version = jeweler_tasks.jeweler.version
+
 require 'rake/extensiontask'
-
-Rake::ExtensionTask.new('trie', $gemspec) do |ext|
-end
-
+Rake::ExtensionTask.new('trie', $gemspec)
 CLEAN.include 'lib/**/*.so'
 
-require 'rake/testtask'
-Rake::TestTask.new(:test) do |test|
-  test.libs = ['ext', 'spec']
-  test.pattern = 'spec/**/*_spec.rb'
-  test.verbose = true
-end
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new
 
 require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
@@ -51,4 +47,4 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('ext/trie/trie.c')
 end
 
-task :default => :test
+task :default => :spec

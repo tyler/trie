@@ -1,4 +1,4 @@
-require_relative '../ext/trie'
+require_relative '../lib/trie'
 
 describe Trie do
   before :each do

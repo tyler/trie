@@ -12,3 +12,4 @@ Makefile
 *.stackdump
 *.def
 *.so
+tmp/
