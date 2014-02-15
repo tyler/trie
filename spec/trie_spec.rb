@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../lib/trie'
+require_relative '../lib/trie'
 
 describe Trie do
   before :each do

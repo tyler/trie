@@ -1,7 +1,8 @@
-# A sample Gemfile
 source "https://rubygems.org"
 
-group :test do
-    gem 'rake'
-    gem 'jeweler'
+group :development do
+  gem 'rake'
+  gem "rdoc", "~> 3.12"
+  gem "bundler", "~> 1.0"
+  gem "jeweler", "~> 2.0.1"
 end

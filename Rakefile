@@ -1,9 +1,19 @@
-require 'rake'
-require 'rdoc/task'
+# encoding: utf-8
 
+require 'rubygems'
+require 'bundler'
 begin
-  require 'jeweler' # gem install technicalpickles-jeweler
-  Jeweler::Tasks.new do |s|
+  Bundler.setup(:default, :development)
+rescue Bundler::BundlerError => e
+  $stderr.puts e.message
+  $stderr.puts "Run `bundle install` to install missing gems"
+  exit e.status_code
+end
+require 'rake'
+
+require 'jeweler'
+
+Jeweler::Tasks.new do |s|
     s.name = "fast_trie"
     s.email = "tyler@scribd.com"
     s.homepage = "http://github.com/tyler/trie"
@@ -15,17 +25,17 @@ begin
     s.files = FileList["[A-Z]*.*", "{spec,ext}/**/*"]
     s.has_rdoc = true
     s.rdoc_options = ['--title', 'Trie', '--line-numbers', '--op', 'rdoc', '--main', 'ext/trie/trie.c', 'README']
-  end
+end
+Jeweler::RubygemsDotOrgTasks.new
+
+require 'rake/testtask'
+Rake::TestTask.new(:test) do |test|
+  test.libs << 'lib' << 'spec'
+  test.pattern = 'spec/**/*_spec.rb'
+  test.verbose = true
 end
 
-begin
-  require 'spec/rake/spectask'
-  Spec::Rake::SpecTask.new do |t|
-    t.spec_files = 'spec/**/*_spec.rb'
-  end
-rescue LoadError
-end
-
+require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
   rdoc.title    = 'Trie'
@@ -34,8 +44,4 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('ext/trie/trie.c')
 end
 
-task :clean do
-  sh 'rm -fv ext/*.{o,bundle} ext/trie/*.{o,bundle} ext/Makefile ext/trie/Makefile'
-end
-
-task :default => :spec
+task :default => :test
