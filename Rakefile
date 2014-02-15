@@ -28,9 +28,16 @@ Jeweler::Tasks.new do |s|
 end
 Jeweler::RubygemsDotOrgTasks.new
 
+require 'rake/extensiontask'
+
+Rake::ExtensionTask.new('trie', $gemspec) do |ext|
+end
+
+CLEAN.include 'lib/**/*.so'
+
 require 'rake/testtask'
 Rake::TestTask.new(:test) do |test|
-  test.libs << 'lib' << 'spec'
+  test.libs = ['ext', 'spec']
   test.pattern = 'spec/**/*_spec.rb'
   test.verbose = true
 end
