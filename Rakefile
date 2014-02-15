@@ -47,4 +47,4 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('ext/trie/trie.c')
 end
 
-task :default => :spec
+task :default => [:compile, :spec]
