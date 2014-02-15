@@ -1,8 +1,8 @@
 require 'rake'
-require 'rake/rdoctask'
+require 'rdoc/task'
 
 begin
-  require 'jeweler'
+  require 'jeweler' # gem install technicalpickles-jeweler
   Jeweler::Tasks.new do |s|
     s.name = "fast_trie"
     s.email = "tyler@scribd.com"
@@ -16,8 +16,6 @@ begin
     s.has_rdoc = true
     s.rdoc_options = ['--title', 'Trie', '--line-numbers', '--op', 'rdoc', '--main', 'ext/trie/trie.c', 'README']
   end
-rescue LoadError
-  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
 end
 
 begin
