@@ -29,7 +29,7 @@ From RubyGems https://rubygems.org/gems/fast_trie
 
 h2. Tutorial
 
-Let's go through building a simple autocompleter using Trie.
+Let's go through building a simple autocompleter using "Trie":http://rubydoc.info/gems/fast_trie/Trie object.
 
 <pre><code>
   require 'trie'
@@ -93,8 +93,9 @@ There are, of course, some more interesting and advanced ways to use a trie.  Fo
   end
 </code></pre>
 
-By calling <code>root</code> on a Trie object, you get a TrieNode, pointed at the root of the trie.  You can then use this node to walk the trie and perceive things about each word.
+By calling <code>root</code> on a Trie, you get a "TrieNode":http://rubydoc.info/gems/fast_trie/TrieNode, pointed at the root of the trie.  You can then use this node to walk the trie and perceive things about each word.
 
+You can read the reference documentation at http://rubydoc.info/gems/fast_trie/frames/Trie
 
 h2. Performance Characteristics
 
