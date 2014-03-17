@@ -7,3 +7,9 @@ coverage
 *~
 #*
 *.gem
+rdoc
+Makefile
+*.stackdump
+*.def
+*.so
+tmp/
