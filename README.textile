@@ -1,5 +1,7 @@
 h1. Trie
 
+!https://badge.fury.io/rb/fast_trie.png!:http://badge.fury.io/rb/fast_trie !https://travis-ci.org/tyler/trie.png!:https://travis-ci.org/tyler/trie
+
 This is a trie for Ruby using libdatrie. It uses a dual-array system, meaning it has best-in-class memory usage and search time.
 
 
