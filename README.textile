@@ -19,12 +19,20 @@ But in short a trie is a data structure that holds strings in a tree.  So if you
 
 It's easy to see how this can have pretty neat implications for things like searching through lists of strings, sorting lists of strings, and things like spelling correction and autocompletion.
 
+h2. Installation
+
+From RubyGems https://rubygems.org/gems/fast_trie
+
+<pre><code>
+  gem install fast_trie
+</code></pre>
 
 h2. Tutorial
 
 Let's go through building a simple autocompleter using Trie.
 
 <pre><code>
+  require 'trie'
   Trie.new
 </code></pre>
 
