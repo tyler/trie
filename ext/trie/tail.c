@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "tail.h"
 #include "fileutils.h"
@@ -180,7 +181,7 @@ tail_get_suffix (const Tail *t, TrieIndex index)
     return (index < t->num_tails) ? t->tails[index].suffix : NULL;
 }
 
-Bool
+bool
 tail_set_suffix (Tail *t, TrieIndex index, const TrieChar *suffix)
 {
     index -= TAIL_START_BLOCKNO;
@@ -195,9 +196,9 @@ tail_set_suffix (Tail *t, TrieIndex index, const TrieChar *suffix)
             free (t->tails[index].suffix);
         t->tails[index].suffix = tmp;
 
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 TrieIndex
@@ -267,15 +268,15 @@ tail_get_data (const Tail *t, TrieIndex index)
     return (index < t->num_tails) ? t->tails[index].data : TRIE_DATA_ERROR;
 }
 
-Bool
+bool
 tail_set_data (Tail *t, TrieIndex index, TrieData data)
 {
     index -= TAIL_START_BLOCKNO;
     if (index < t->num_tails) {
         t->tails[index].data = data;
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 void
@@ -297,7 +298,7 @@ tail_walk_str  (const Tail      *t,
 
     suffix = tail_get_suffix (t, s);
     if (!suffix)
-        return FALSE;
+        return false;
 
     i = 0; j = *suffix_idx;
     while (i < len) {
@@ -313,7 +314,7 @@ tail_walk_str  (const Tail      *t,
     return i;
 }
 
-Bool
+bool
 tail_walk_char (const Tail      *t,
                 TrieIndex        s,
                 short           *suffix_idx,
@@ -324,15 +325,15 @@ tail_walk_char (const Tail      *t,
 
     suffix = tail_get_suffix (t, s);
     if (!suffix)
-        return FALSE;
+        return false;
 
     suffix_char = suffix[*suffix_idx];
     if (suffix_char == c) {
         if (0 != suffix_char)
             ++*suffix_idx;
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 /*

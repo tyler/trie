@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "trie-private.h"
 #include "darray.h"
@@ -38,10 +39,10 @@ static void         symbols_add (Symbols *syms, TrieChar c);
 
 #define da_get_free_list(d)      (1)
 
-static Bool         da_check_free_cell (DArray         *d,
+static bool         da_check_free_cell (DArray         *d,
                                         TrieIndex       s);
 
-static Bool         da_has_children    (DArray         *d,
+static bool         da_has_children    (DArray         *d,
                                         TrieIndex       s);
 
 static Symbols *    da_output_symbols  (const DArray   *d,
@@ -53,7 +54,7 @@ static TrieChar *   da_get_state_key   (const DArray   *d,
 static TrieIndex    da_find_free_base  (DArray         *d,
                                         const Symbols  *symbols);
 
-static Bool         da_fit_symbols     (DArray         *d,
+static bool         da_fit_symbols     (DArray         *d,
                                         TrieIndex       base,
                                         const Symbols  *symbols);
 
@@ -61,7 +62,7 @@ static void         da_relocate_base   (DArray         *d,
                                         TrieIndex       s,
                                         TrieIndex       new_base);
 
-static Bool         da_extend_pool     (DArray         *d,
+static bool         da_extend_pool     (DArray         *d,
                                         TrieIndex       to_index);
 
 static void         da_alloc_cell      (DArray         *d,
@@ -70,7 +71,7 @@ static void         da_alloc_cell      (DArray         *d,
 static void         da_free_cell       (DArray         *d,
                                         TrieIndex       cell);
 
-static Bool         da_enumerate_recursive (const DArray   *d,
+static bool         da_enumerate_recursive (const DArray   *d,
                                             TrieIndex       state,
                                             DAEnumFunc      enum_func,
                                             void           *user_data);
@@ -281,7 +282,7 @@ da_set_check (DArray *d, TrieIndex s, TrieIndex val)
     }
 }
 
-Bool
+bool
 da_walk (const DArray *d, TrieIndex *s, TrieChar c)
 {
     TrieIndex   next;
@@ -289,9 +290,9 @@ da_walk (const DArray *d, TrieIndex *s, TrieChar c)
     next = da_get_base (d, *s) + c;
     if (da_get_check (d, next) == *s) {
         *s = next;
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 TrieIndex
@@ -348,14 +349,14 @@ da_insert_branch (DArray *d, TrieIndex s, TrieChar c)
     return next;
 }
 
-static Bool
+static bool
 da_check_free_cell (DArray         *d,
                     TrieIndex       s)
 {
     return da_extend_pool (d, s) && da_get_check (d, s) < 0;
 }
 
-static Bool
+static bool
 da_has_children    (DArray         *d,
                     TrieIndex       s)
 {
@@ -364,15 +365,15 @@ da_has_children    (DArray         *d,
 
     base = da_get_base (d, s);
     if (TRIE_INDEX_ERROR == base || base < 0)
-        return FALSE;
+        return false;
 
     max_c = MIN_VAL (TRIE_CHAR_MAX, TRIE_INDEX_MAX - base);
     for (c = 0; c < max_c; c++) {
         if (da_get_check (d, base + c) == s)
-            return TRUE;
+            return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 static Symbols *
@@ -471,7 +472,7 @@ da_find_free_base  (DArray         *d,
     return s - first_sym;
 }
 
-static Bool
+static bool
 da_fit_symbols     (DArray         *d,
                     TrieIndex       base,
                     const Symbols  *symbols)
@@ -485,9 +486,9 @@ da_fit_symbols     (DArray         *d,
          * or cell [base + sym] is not free, the symbol is not fit.
          */
         if (base > TRIE_INDEX_MAX - sym || !da_check_free_cell (d, base + sym))
-            return FALSE;
+            return false;
     }
-    return TRUE;
+    return true;
 }
 
 static void
@@ -539,7 +540,7 @@ da_relocate_base   (DArray         *d,
     da_set_base (d, s, new_base);
 }
 
-static Bool
+static bool
 da_extend_pool     (DArray         *d,
                     TrieIndex       to_index)
 {
@@ -548,10 +549,10 @@ da_extend_pool     (DArray         *d,
     TrieIndex   free_tail;
 
     if (to_index <= 0 || TRIE_INDEX_MAX <= to_index)
-        return FALSE;
+        return false;
 
     if (to_index < d->num_cells)
-        return TRUE;
+        return true;
 
     d->cells = (DACell *) realloc (d->cells, (to_index + 1) * sizeof (DACell));
     new_begin = d->num_cells;
@@ -573,7 +574,7 @@ da_extend_pool     (DArray         *d,
     /* update header cell */
     d->cells[0].check = d->num_cells;
 
-    return TRUE;
+    return true;
 }
 
 void
@@ -628,19 +629,19 @@ da_free_cell       (DArray         *d,
     da_set_base (d, i, -cell);
 }
 
-Bool
+bool
 da_enumerate (const DArray *d, DAEnumFunc enum_func, void *user_data)
 {
     return da_enumerate_recursive (d, da_get_root (d), enum_func, user_data);
 }
 
-static Bool
+static bool
 da_enumerate_recursive (const DArray   *d,
                         TrieIndex       state,
                         DAEnumFunc      enum_func,
                         void           *user_data)
 {
-    Bool        ret;
+    bool        ret;
     TrieIndex   base;
 
     base = da_get_base (d, state);
@@ -655,7 +656,7 @@ da_enumerate_recursive (const DArray   *d,
         Symbols *symbols;
         int      i;
 
-        ret = TRUE;
+        ret = true;
         symbols = da_output_symbols (d, state);
         for (i = 0; ret && i < symbols_num (symbols); i++) {
             ret = da_enumerate_recursive (d, base + symbols_get (symbols, i),
