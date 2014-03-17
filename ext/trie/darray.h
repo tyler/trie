@@ -8,6 +8,7 @@
 #ifndef __DARRAY_H
 #define __DARRAY_H
 
+#include <stdbool.h>
 #include "triedefs.h"
 
 /**
@@ -29,7 +30,7 @@ typedef struct _DArray  DArray;
  *
  * @return TRUE to continue enumeration, FALSE to stop
  */
-typedef Bool (*DAEnumFunc) (const TrieChar   *key,
+typedef bool (*DAEnumFunc) (const TrieChar   *key,
                             TrieIndex         sep_node,
                             void             *user_data);
 
@@ -151,7 +152,7 @@ void       da_set_check (DArray *d, TrieIndex s, TrieIndex val);
  * returns TRUE and @a *s is updated to the new state. Otherwise, it returns
  * FALSE and @a *s is left unchanged.
  */
-Bool       da_walk (const DArray *d, TrieIndex *s, TrieChar c);
+bool       da_walk (const DArray *d, TrieIndex *s, TrieChar c);
 
 /**
  * @brief Test walkability in double-array structure
@@ -165,7 +166,7 @@ Bool       da_walk (const DArray *d, TrieIndex *s, TrieChar c);
  * Test if there is a transition from state @a s with input character @a c.
  */
 /*
-Bool       da_is_walkable (DArray *d, TrieIndex s, TrieChar c);
+bool       da_is_walkable (DArray *d, TrieIndex s, TrieChar c);
 */
 #define    da_is_walkable(d,s,c) \
     (da_get_check ((d), da_get_base ((d), (s)) + (c)) == (s))
@@ -224,7 +225,7 @@ void       da_prune_upto (DArray *d, TrieIndex p, TrieIndex s);
  * the separate node, and user-supplied data. Returning FALSE from such
  * callback will stop enumeration and return FALSE.
  */
-Bool    da_enumerate (const DArray *d, DAEnumFunc enum_func, void *user_data);
+bool    da_enumerate (const DArray *d, DAEnumFunc enum_func, void *user_data);
 
 #endif  /* __DARRAY_H */
 

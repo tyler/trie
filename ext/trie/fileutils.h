@@ -9,7 +9,8 @@
 #define __FILEUTILS_H
 
 #include <stdio.h>
-
+#include <stdbool.h>
+ 
 #include "triedefs.h"
 
 FILE * file_open (const char *dir, const char *name, const char *ext,
@@ -17,17 +18,17 @@ FILE * file_open (const char *dir, const char *name, const char *ext,
 
 long   file_length (FILE *file);
 
-Bool   file_read_int32 (FILE *file, int32 *o_val);
-Bool   file_write_int32 (FILE *file, int32 val);
+bool   file_read_int32 (FILE *file, int32 *o_val);
+bool   file_write_int32 (FILE *file, int32 val);
 
-Bool   file_read_int16 (FILE *file, int16 *o_val);
-Bool   file_write_int16 (FILE *file, int16 val);
+bool   file_read_int16 (FILE *file, int16 *o_val);
+bool   file_write_int16 (FILE *file, int16 val);
 
-Bool   file_read_int8 (FILE *file, int8 *o_val);
-Bool   file_write_int8 (FILE *file, int8 val);
+bool   file_read_int8 (FILE *file, int8 *o_val);
+bool   file_write_int8 (FILE *file, int8 val);
 
-Bool   file_read_chars (FILE *file, char *buff, int len);
-Bool   file_write_chars (FILE *file, const char *buff, int len);
+bool   file_read_chars (FILE *file, char *buff, int len);
+bool   file_write_chars (FILE *file, const char *buff, int len);
 
 #endif /* __FILEUTILS_H */
 

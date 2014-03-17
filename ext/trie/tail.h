@@ -87,7 +87,7 @@ const TrieChar *    tail_get_suffix (const Tail *t, TrieIndex index);
  *
  * Set suffix of existing entry of given @a index in tail.
  */
-Bool     tail_set_suffix (Tail *t, TrieIndex index, const TrieChar *suffix);
+bool     tail_set_suffix (Tail *t, TrieIndex index, const TrieChar *suffix);
 
 /**
  * @brief Add a new suffix
@@ -124,7 +124,7 @@ TrieData tail_get_data (const Tail *t, TrieIndex index);
  *
  * Set data associated to suffix entry @a index in tail data.
  */
-Bool     tail_set_data (Tail *t, TrieIndex index, TrieData data);
+bool     tail_set_data (Tail *t, TrieIndex index, TrieData data);
 
 /**
  * @brief Delete suffix entry
@@ -173,7 +173,7 @@ int      tail_walk_str  (const Tail      *t,
  * it returns TRUE, and @a *suffix_idx is updated to the next character.
  * Otherwise, it returns FALSE, and @a *suffix_idx is left unchanged.
  */
-Bool     tail_walk_char (const Tail      *t,
+bool     tail_walk_char (const Tail      *t,
                          TrieIndex        s,
                          short           *suffix_idx,
                          TrieChar         c);
@@ -192,7 +192,7 @@ Bool     tail_walk_char (const Tail      *t,
  * position @a suffix_idx of entry @a s of the tail data @a t.
  */
 /*
-Bool     tail_is_walkable_char (Tail            *t,
+bool     tail_is_walkable_char (Tail            *t,
                                 TrieIndex        s,
                                 short            suffix_idx,
                                 const TrieChar   c);
