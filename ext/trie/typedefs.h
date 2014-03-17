@@ -10,7 +10,15 @@
 
 #include <limits.h>
 
-typedef enum { FALSE = 0, TRUE = 1 } Bool;
+typedef enum
+{
+	bfalse = 0,
+	btrue = 1
+} tbool;			// Boolean!
+ 
+#define Bool  tbool
+#define FALSE bfalse
+#define TRUE  btrue
 
 # if UCHAR_MAX == 0xff
 #   ifndef UINT8_TYPEDEF
