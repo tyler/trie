@@ -8,8 +8,8 @@ Gem::Specification.new do |s|
   s.version = "0.5.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Tyler McMullen"]
-  s.date = "2014-02-15"
+  s.authors = ["Tyler McMullen", "Matt Hickford"]
+  s.date = "2014-03-18"
   s.description = "Ruby Trie based on libdatrie."
   s.email = "tyler@scribd.com"
   s.extensions = ["ext/trie/extconf.rb"]
@@ -21,26 +21,17 @@ Gem::Specification.new do |s|
     "Gemfile.lock",
     "README.textile",
     "VERSION.yml",
-    "ext/trie/Makefile",
     "ext/trie/darray.c",
     "ext/trie/darray.h",
-    "ext/trie/darray.o",
     "ext/trie/extconf.rb",
     "ext/trie/fileutils.c",
     "ext/trie/fileutils.h",
-    "ext/trie/fileutils.o",
-    "ext/trie/rm.exe.stackdump",
     "ext/trie/tail.c",
     "ext/trie/tail.h",
-    "ext/trie/tail.o",
-    "ext/trie/trie-i386-mingw32.def",
     "ext/trie/trie-private.c",
     "ext/trie/trie-private.h",
-    "ext/trie/trie-private.o",
     "ext/trie/trie.c",
     "ext/trie/trie.h",
-    "ext/trie/trie.o",
-    "ext/trie/trie.so",
     "ext/trie/triedefs.h",
     "ext/trie/typedefs.h",
     "fast_trie.gemspec",
@@ -57,20 +48,26 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_development_dependency(%q<rake>, [">= 0"])
+      s.add_development_dependency(%q<rspec>, [">= 0"])
       s.add_development_dependency(%q<rdoc>, ["~> 3.12"])
       s.add_development_dependency(%q<bundler>, ["~> 1.0"])
       s.add_development_dependency(%q<jeweler>, ["~> 2.0.1"])
+      s.add_development_dependency(%q<rake-compiler>, [">= 0"])
     else
       s.add_dependency(%q<rake>, [">= 0"])
+      s.add_dependency(%q<rspec>, [">= 0"])
       s.add_dependency(%q<rdoc>, ["~> 3.12"])
       s.add_dependency(%q<bundler>, ["~> 1.0"])
       s.add_dependency(%q<jeweler>, ["~> 2.0.1"])
+      s.add_dependency(%q<rake-compiler>, [">= 0"])
     end
   else
     s.add_dependency(%q<rake>, [">= 0"])
+    s.add_dependency(%q<rspec>, [">= 0"])
     s.add_dependency(%q<rdoc>, ["~> 3.12"])
     s.add_dependency(%q<bundler>, ["~> 1.0"])
     s.add_dependency(%q<jeweler>, ["~> 2.0.1"])
+    s.add_dependency(%q<rake-compiler>, [">= 0"])
   end
 end
 
