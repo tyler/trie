@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include "fileutils.h"
 
@@ -73,20 +72,20 @@ file_length (FILE *file)
     return size;
 }
 
-bool
+Bool
 file_read_int32 (FILE *file, int32 *o_val)
 {
     unsigned char   buff[4];
 
     if (fread (buff, 4, 1, file) == 1) {
         *o_val = (buff[0] << 24) | (buff[1] << 16) |  (buff[2] << 8) | buff[3];
-        return true;
+        return TRUE;
     }
 
-    return false;
+    return FALSE;
 }
 
-bool
+Bool
 file_write_int32 (FILE *file, int32 val)
 {
     unsigned char   buff[4];
@@ -99,20 +98,20 @@ file_write_int32 (FILE *file, int32 val)
     return (fwrite (buff, 4, 1, file) == 1);
 }
 
-bool
+Bool
 file_read_int16 (FILE *file, int16 *o_val)
 {
     unsigned char   buff[2];
 
     if (fread (buff, 2, 1, file) == 1) {
         *o_val = (buff[0] << 8) | buff[1];
-        return true;
+        return TRUE;
     }
 
-    return false;
+    return FALSE;
 }
 
-bool
+Bool
 file_write_int16 (FILE *file, int16 val)
 {
     unsigned char   buff[2];
@@ -123,25 +122,25 @@ file_write_int16 (FILE *file, int16 val)
     return (fwrite (buff, 2, 1, file) == 1);
 }
 
-bool
+Bool
 file_read_int8 (FILE *file, int8 *o_val)
 {
     return (fread (o_val, sizeof (int8), 1, file) == 1);
 }
 
-bool
+Bool
 file_write_int8 (FILE *file, int8 val)
 {
     return (fwrite (&val, sizeof (int8), 1, file) == 1);
 }
 
-bool
+Bool
 file_read_chars (FILE *file, char *buff, int len)
 {
     return (fread (buff, sizeof (char), len, file) == len);
 }
 
-bool
+Bool
 file_write_chars (FILE *file, const char *buff, int len)
 {
     return (fwrite (buff, sizeof (char), len, file) == len);

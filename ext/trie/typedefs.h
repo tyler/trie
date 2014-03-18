@@ -10,6 +10,12 @@
 
 #include <limits.h>
 
+// fix for fast_trie on Windows. Should be easy to merge with future changes to libdatrie. MH
+#include <stdbool.h>
+#define Bool  bool
+#define FALSE false
+#define TRUE  true
+
 # if UCHAR_MAX == 0xff
 #   ifndef UINT8_TYPEDEF
 #     define UINT8_TYPEDEF
