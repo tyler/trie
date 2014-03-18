@@ -401,7 +401,7 @@ static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
     if(RSTRING_LEN(rchar) != 1)
 		return Qnil;
 
-    bool result = trie_state_walk(state, *RSTRING_PTR(rchar));
+    Bool result = trie_state_walk(state, *RSTRING_PTR(rchar));
     
     if(result) {
 		rb_iv_set(self, "@state", rchar);
@@ -432,7 +432,7 @@ static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
     if(RSTRING_LEN(rchar) != 1)
 		return Qnil;
 
-    bool result = trie_state_walk(state, *RSTRING_PTR(rchar));
+    Bool result = trie_state_walk(state, *RSTRING_PTR(rchar));
     
     if(result) {
 		rb_iv_set(new_node, "@state", rchar);

@@ -10,6 +10,8 @@
 
 #include <limits.h>
 
+typedef enum { FALSE = 0, TRUE = 1 } Bool;
+
 # if UCHAR_MAX == 0xff
 #   ifndef UINT8_TYPEDEF
 #     define UINT8_TYPEDEF

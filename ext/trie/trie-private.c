@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-
 #include "darray.h"
 #include "tail.h"
 #include "trie.h"
@@ -20,12 +18,12 @@ void trie_free(Trie *trie) {
 	free(trie);
 }
 
-static bool trie_branch_in_branch (Trie *trie, TrieIndex sep_node, const TrieChar *suffix, TrieData data) {
+static Bool trie_branch_in_branch (Trie *trie, TrieIndex sep_node, const TrieChar *suffix, TrieData data) {
     TrieIndex new_da, new_tail;
 
     new_da = da_insert_branch (trie->da, sep_node, *suffix);
     if (TRIE_INDEX_ERROR == new_da)
-        return false;
+        return FALSE;
 
     if ('\0' != *suffix)
         ++suffix;
@@ -34,11 +32,11 @@ static bool trie_branch_in_branch (Trie *trie, TrieIndex sep_node, const TrieCha
     tail_set_data (trie->tail, new_tail, data);
     trie_da_set_tail_index (trie->da, new_da, new_tail);
 
-    // trie->is_dirty = true;
-    return true;
+    // trie->is_dirty = TRUE;
+    return TRUE;
 }
 
-static bool trie_branch_in_tail(Trie *trie, TrieIndex sep_node, const TrieChar *suffix, TrieData data) {
+static Bool trie_branch_in_tail(Trie *trie, TrieIndex sep_node, const TrieChar *suffix, TrieData data) {
     TrieIndex old_tail, old_da, s;
     const TrieChar *old_suffix, *p;
 
@@ -46,7 +44,7 @@ static bool trie_branch_in_tail(Trie *trie, TrieIndex sep_node, const TrieChar *
     old_tail = trie_da_get_tail_index (trie->da, sep_node);
     old_suffix = tail_get_suffix (trie->tail, old_tail);
     if (!old_suffix)
-        return false;
+        return FALSE;
 
     for (p = old_suffix, s = sep_node; *p == *suffix; p++, suffix++) {
         TrieIndex t = da_insert_branch (trie->da, s, *p);
@@ -71,10 +69,10 @@ fail:
     /* failed, undo previous insertions and return error */
     da_prune_upto (trie->da, sep_node, s);
     trie_da_set_tail_index (trie->da, sep_node, old_tail);
-    return false;
+    return FALSE;
 }
 
-bool trie_store (Trie *trie, const TrieChar *key, TrieData data) {
+Bool trie_store (Trie *trie, const TrieChar *key, TrieData data) {
     TrieIndex        s, t;
     short            suffix_idx;
     const TrieChar *p, *sep;
@@ -99,12 +97,12 @@ bool trie_store (Trie *trie, const TrieChar *key, TrieData data) {
 
     /* duplicated key, overwrite val */
     tail_set_data (trie->tail, t, data);
-    // trie->is_dirty = true;
-    return true;
+    // trie->is_dirty = TRUE;
+    return TRUE;
 }
 
 
-bool trie_has_key (const Trie *trie, const TrieChar *key) {
+Bool trie_has_key (const Trie *trie, const TrieChar *key) {
     TrieIndex        s;
     short            suffix_idx;
     const TrieChar *p;
@@ -113,7 +111,7 @@ bool trie_has_key (const Trie *trie, const TrieChar *key) {
     s = da_get_root (trie->da);
     for (p = key; !trie_da_is_separate (trie->da, s); p++) {
         if (!da_walk (trie->da, &s, *p))
-            return false;
+            return FALSE;
         if (0 == *p)
             break;
     }
@@ -123,16 +121,16 @@ bool trie_has_key (const Trie *trie, const TrieChar *key) {
     suffix_idx = 0;
     for ( ; ; p++) {
         if (!tail_walk_char (trie->tail, s, &suffix_idx, *p))
-            return false;
+            return FALSE;
         if (0 == *p)
             break;
     }
 
-    return true;
+    return TRUE;
 }
 
 
-bool trie_retrieve (const Trie *trie, const TrieChar *key, TrieData *o_data) {
+Bool trie_retrieve (const Trie *trie, const TrieChar *key, TrieData *o_data) {
     TrieIndex        s;
     short            suffix_idx;
     const TrieChar *p;
@@ -141,7 +139,7 @@ bool trie_retrieve (const Trie *trie, const TrieChar *key, TrieData *o_data) {
     s = da_get_root (trie->da);
     for (p = key; !trie_da_is_separate (trie->da, s); p++) {
         if (!da_walk (trie->da, &s, *p))
-            return false;
+            return FALSE;
         if (0 == *p)
             break;
     }
@@ -151,7 +149,7 @@ bool trie_retrieve (const Trie *trie, const TrieChar *key, TrieData *o_data) {
     suffix_idx = 0;
     for ( ; ; p++) {
         if (!tail_walk_char (trie->tail, s, &suffix_idx, *p))
-            return false;
+            return FALSE;
         if (0 == *p)
             break;
     }
@@ -159,10 +157,10 @@ bool trie_retrieve (const Trie *trie, const TrieChar *key, TrieData *o_data) {
     /* found, set the val and return */
     if (o_data)
         *o_data = tail_get_data (trie->tail, s);
-    return true;
+    return TRUE;
 }
 
-bool trie_delete (Trie *trie, const TrieChar *key) {
+Bool trie_delete (Trie *trie, const TrieChar *key) {
     TrieIndex        s, t;
     short            suffix_idx;
     const TrieChar *p;
@@ -171,7 +169,7 @@ bool trie_delete (Trie *trie, const TrieChar *key) {
     s = da_get_root (trie->da);
     for (p = key; !trie_da_is_separate (trie->da, s); p++) {
         if (!da_walk (trie->da, &s, *p))
-            return false;
+            return FALSE;
         if (0 == *p)
             break;
     }
@@ -181,7 +179,7 @@ bool trie_delete (Trie *trie, const TrieChar *key) {
     suffix_idx = 0;
     for ( ; ; p++) {
         if (!tail_walk_char (trie->tail, t, &suffix_idx, *p))
-            return false;
+            return FALSE;
         if (0 == *p)
             break;
     }
@@ -190,8 +188,8 @@ bool trie_delete (Trie *trie, const TrieChar *key) {
     da_set_base (trie->da, s, TRIE_INDEX_ERROR);
     da_prune (trie->da, s);
 
-    //trie->is_dirty = true;
-    return true;
+    //trie->is_dirty = TRUE;
+    return TRUE;
 }
 
 /*-------------------------------*
@@ -199,7 +197,7 @@ bool trie_delete (Trie *trie, const TrieChar *key) {
  *-------------------------------*/
 
 TrieState * trie_root (const Trie *trie) {
-    return trie_state_new (trie, da_get_root (trie->da), 0, false);
+    return trie_state_new (trie, da_get_root (trie->da), 0, FALSE);
 }
 
 /*----------------*
@@ -231,19 +229,19 @@ void trie_state_free (TrieState *s) {
 
 void trie_state_rewind (TrieState *s) {
     s->index      = da_get_root (s->trie->da);
-    s->is_suffix  = false;
+    s->is_suffix  = FALSE;
 }
 
-bool trie_state_walk (TrieState *s, TrieChar c) {
+Bool trie_state_walk (TrieState *s, TrieChar c) {
     if (!s->is_suffix) {
-        bool ret;
+        Bool ret;
 
         ret = da_walk (s->trie->da, &s->index, c);
 
         if (ret && trie_da_is_separate (s->trie->da, s->index)) {
             s->index = trie_da_get_tail_index (s->trie->da, s->index);
             s->suffix_idx = 0;
-            s->is_suffix = true;
+            s->is_suffix = TRUE;
         }
 
         return ret;
@@ -252,14 +250,14 @@ bool trie_state_walk (TrieState *s, TrieChar c) {
     }
 }
 
-bool trie_state_is_walkable (const TrieState *s, TrieChar c) {
+Bool trie_state_is_walkable (const TrieState *s, TrieChar c) {
     if (!s->is_suffix)
         return da_is_walkable (s->trie->da, s->index, c);
     else 
         return tail_is_walkable_char (s->trie->tail, s->index, s->suffix_idx, c);
 }
 
-bool trie_state_is_leaf (const TrieState *s) {
+Bool trie_state_is_leaf (const TrieState *s) {
     return s->is_suffix && trie_state_is_terminal (s);
 }
 
@@ -268,7 +266,7 @@ TrieData trie_state_get_data (const TrieState *s) {
 }
 
 int main(void) {
-	bool res;
+	Bool res;
 	TrieData *data = (TrieData*)malloc(sizeof(TrieData));
 	Trie *trie = trie_new();
 
