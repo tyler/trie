@@ -1,6 +1,6 @@
 h1. Trie
 
-!https://badge.fury.io/rb/fast_trie.png!:http://badge.fury.io/rb/fast_trie !https://travis-ci.org/tyler/trie.png!:https://travis-ci.org/tyler/trie
+!https://badge.fury.io/rb/fast_trie.svg!:https://rubygems.org/gems/fast_trie !https://travis-ci.org/tyler/trie.svg!:https://travis-ci.org/tyler/trie
 
 This is a trie for Ruby using "libdatrie":http://linux.thai.net/~thep/datrie/. It uses a dual-array system, meaning it has best-in-class memory usage and search time.
 
@@ -126,7 +126,7 @@ For keys that are 40 characters long:
 
 There are a few takeaways from this. First, there is no strong correlation between length of keys and insert or retrieve time. They stay fairly constant as the length of keys increase. Secondly, doing prefix searches with this trie gets slower linearly with the length of the keys in the trie.
 
-This points to a limitation of this type of trie.  It is based on libdatrie, which is a dual-array trie.  When finding branches from a particular node, we must query all possible branches to determine whether or not they exist.  So for each node we do 255 of these queries.
+This points to a limitation of this type of trie.  It is based on "libdatrie":http://linux.thai.net/~thep/datrie/ ("version 0.1.99":http://linux.thai.net/svn/software/datrie/trunk/NEWS), which is a dual-array trie.  When finding branches from a particular node, we must query all possible branches to determine whether or not they exist.  So for each node we do 255 of these queries.
 
 There may be some tricks to speed this up, but for now it is simply a limitation of this trie.
 
