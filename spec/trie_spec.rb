@@ -144,29 +144,44 @@ describe Trie do
       FileUtils.mkdir_p(dir)
       File.join(dir, 'trie')
     end
-    
+
     context 'when I save the populated trie to disk' do
       before(:each) do
         @trie.add('omgwtflolbbq', 123)
         @trie.save(filename_base)
       end
-      
+
       it 'should contain the same data when reading from disk' do
         trie2 = Trie.read(filename_base)
         trie2.get('omgwtflolbbq').should == 123
       end
     end
   end
-  
+
   describe :read do
     context 'when the files to read from do not exist' do
       let(:filename_base) do
         "phantasy/file/path/that/does/not/exist"
       end
-      
+
       it 'should raise an error when attempting a read' do
         lambda { Trie.read(filename_base) }.should raise_error(IOError)
       end
+    end
+  end
+
+  describe :has_children? do
+    it 'returns true when there are children matching prefix' do
+      @trie.has_children?('r').should be_true
+
+      @trie.has_children?('rock').should be_true
+      @trie.has_children?('rocket').should be_true
+    end
+
+    it 'returns false when there are no children matching prefix' do
+      @trie.has_children?('no').should be_false
+      @trie.has_children?('rome').should be_false
+      @trie.has_children?('roc_').should be_false
     end
   end
 end
