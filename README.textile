@@ -4,6 +4,8 @@ h1. Trie
 
 This is a trie for Ruby using "libdatrie":http://linux.thai.net/~thep/datrie/. It uses a dual-array system, meaning it has best-in-class memory usage and search time.
 
+In a dual-array trie, the only way to tell whether or not a particular branch exists is by attempting to traverse it. So this implementation does not provide a way to iterate over all the strings in a trie.
+
 
 h2. What is a trie?
 
