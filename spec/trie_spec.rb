@@ -65,6 +65,17 @@ describe Trie do
       children.should include('rocket')
     end
 
+    it 'returns all children by first character' do
+      children = @trie.children('r')
+      children.size.should == 2
+      children.should include('rock')
+      children.should include('rocket')
+
+      children = @trie.children('f')
+      children.size.should == 1
+      children.should include('frederico')
+    end
+
     it 'returns blank array if prefix does not exist' do
       @trie.children('ajsodij').should == []
     end
@@ -176,12 +187,26 @@ describe Trie do
 
       @trie.has_children?('rock').should be_true
       @trie.has_children?('rocket').should be_true
+
+      @trie.has_children?('f').should be_true
+      @trie.has_children?('fred').should be_true
     end
 
     it 'returns false when there are no children matching prefix' do
       @trie.has_children?('no').should be_false
       @trie.has_children?('rome').should be_false
       @trie.has_children?('roc_').should be_false
+      @trie.has_children?('rocketttt').should be_false
+    end
+
+    it 'handles keys with values' do
+      @trie.add('value1', 1)
+      @trie.add('value2', 2)
+
+      @trie.has_children?('value1').should be_true
+      @trie.has_children?('value2').should be_true
+      @trie.has_children?('value').should be_true
+      @trie.has_children?('volue').should be_false
     end
   end
 end

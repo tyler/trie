@@ -169,10 +169,11 @@ static VALUE walk_all_paths(Trie *trie, VALUE children, TrieState *state, char *
 				char *word = (char*) malloc(prefix_size + 2);
 				memcpy(word, prefix, prefix_size + 2);
 				rb_ary_push(children, rb_str_new2(word));
+				free(word);
 			}
 
 			walk_all_paths(trie, children, next_state, prefix, prefix_size + 1);
-			
+
 			prefix[prefix_size] = 0;
 			trie_state_free(next_state);
 		}
@@ -211,17 +212,20 @@ static VALUE rb_trie_children(VALUE self, VALUE prefix) {
 	int prefix_size = RSTRING_LEN(prefix);
     TrieState *state = trie_root(trie);
     VALUE children = rb_ary_new();
+
 	TrieChar *char_prefix = (TrieChar*)RSTRING_PTR(prefix);
-    
+
     if(!traverse(state, char_prefix)) {
+    	trie_state_free(state);
     	return children;
     }
 
     if(trie_state_is_terminal(state))
 		rb_ary_push(children, prefix);
-	
+
 	char prefix_buffer[1024];
 	memcpy(prefix_buffer, char_prefix, prefix_size);
+
 	prefix_buffer[prefix_size] = 0;
 
     walk_all_paths(trie, children, state, prefix_buffer, prefix_size);
@@ -230,34 +234,6 @@ static VALUE rb_trie_children(VALUE self, VALUE prefix) {
     return children;
 }
 
-static Bool walk_all_paths_until_first_terminal(Trie *trie, TrieState *state, char *prefix, int prefix_size) {
-	int c;
-	Bool ret = FALSE;
-    for(c = 1; c < 256; c++) {
-		if(trie_state_is_walkable(state,c)) {
-			TrieState *next_state = trie_state_clone(state);
-			trie_state_walk(next_state, c);
-
-			prefix[prefix_size] = c;
-			prefix[prefix_size + 1] = 0;
-
-			if(trie_state_is_terminal(next_state)) {
-				return TRUE;
-			}
-
-			ret = walk_all_paths_until_first_terminal(trie, next_state, prefix, prefix_size + 1);
-
-			prefix[prefix_size] = 0;
-			trie_state_free(next_state);
-
-			if (ret == TRUE) {
-				return ret;
-			}
-		}
-    }
-
-    return ret;
-}
 
 static VALUE rb_trie_has_children(VALUE self, VALUE prefix) {
     if(NIL_P(prefix))
@@ -272,21 +248,9 @@ static VALUE rb_trie_has_children(VALUE self, VALUE prefix) {
     TrieState *state = trie_root(trie);
 	TrieChar *char_prefix = (TrieChar*)RSTRING_PTR(prefix);
 
-    if(!traverse(state, char_prefix)) {
-		return Qfalse;
-	}
-
-    if(trie_state_is_terminal(state))
-        return Qtrue;
-
-	char prefix_buffer[1024];
-	memcpy(prefix_buffer, char_prefix, prefix_size);
-	prefix_buffer[prefix_size] = 0;
-
-    Bool ret = walk_all_paths_until_first_terminal(trie, state, prefix_buffer, prefix_size);
-
-    trie_state_free(state);
-    return ret == TRUE ? Qtrue : Qfalse;
+	Bool ret = traverse(state, char_prefix);
+	trie_state_free(state);
+	return ret == TRUE ? Qtrue : Qfalse;
 }
 
 static VALUE walk_all_paths_with_values(Trie *trie, VALUE children, TrieState *state, char *prefix, int prefix_size) {
@@ -308,6 +272,7 @@ static VALUE walk_all_paths_with_values(Trie *trie, VALUE children, TrieState *s
 
 				VALUE tuple = rb_ary_new();
 				rb_ary_push(tuple, rb_str_new2(word));
+				free(word);
 
 				TrieData trie_data = trie_state_get_data(end_state);
 				rb_ary_push(tuple, (VALUE)trie_data);

@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.require_paths = ["ext"]
   s.authors = ["Tyler McMullen", "Matt Hickford"]
-  s.date = "2015-07-27"
+  s.date = "2015-11-03"
   s.description = "Ruby Trie based on libdatrie."
   s.email = "tyler@scribd.com"
   s.extensions = ["ext/trie/extconf.rb"]
