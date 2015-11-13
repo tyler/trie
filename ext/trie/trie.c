@@ -1,5 +1,7 @@
 #include "ruby.h"
-#include "trie.h"
+#include "datrie/trie.h"
+#include "datrie/alpha-map.h"
+#include "datrie/triedefs.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,7 +17,15 @@ VALUE cTrie, cTrieNode;
 
 static VALUE rb_trie_alloc(VALUE klass) {
 	VALUE obj;
-	obj = Data_Wrap_Struct(klass, 0, trie_free, trie_new());
+    AlphaMap * alpha_map;
+
+    alpha_map = alpha_map_new();
+    alpha_map_add_range(alpha_map, 0, 255);
+    
+	obj = Data_Wrap_Struct(klass, 0, trie_free, trie_new(alpha_map));
+
+    alpha_map_free(alpha_map);
+    
 	return obj;
 }
 
@@ -30,39 +40,17 @@ void raise_ioerror(const char * message) {
  *
  * Returns a new trie with data as read from disk.
  */
-static VALUE rb_trie_read(VALUE self, VALUE filename_base) {
-  VALUE da_filename = rb_str_dup(filename_base);
-  rb_str_concat(da_filename, rb_str_new2(".da"));
-  StringValue(da_filename);
-    
-  VALUE tail_filename = rb_str_dup(filename_base);
-  rb_str_concat(tail_filename, rb_str_new2(".tail"));
-  StringValue(tail_filename);
-
-  Trie *trie = trie_new();
-
+static VALUE rb_trie_read(VALUE self, VALUE filename) {
   VALUE obj;
+  Trie *trie;
+
+  Data_Get_Struct(self, Trie, trie);
+  if (trie != NULL) {
+    trie_free(trie);
+  }
+  
+  trie = trie_new_from_file(RSTRING_PTR(filename));
   obj = Data_Wrap_Struct(self, 0, trie_free, trie);
-
-  DArray *old_da = trie->da;
-  Tail *old_tail = trie->tail;
-
-  FILE *da_file = fopen(RSTRING_PTR(da_filename), "r");
-  if (da_file == NULL)
-    raise_ioerror("Error reading .da file.");
-
-  trie->da = da_read(da_file);
-  fclose(da_file);
-
-  FILE *tail_file = fopen(RSTRING_PTR(tail_filename), "r");
-  if (tail_file == NULL)
-    raise_ioerror("Error reading .tail file.");
-
-  trie->tail = tail_read(tail_file);
-  fclose(tail_file);
-
-  da_free(old_da);
-  tail_free(old_tail);
 
   return obj;
 }
@@ -76,12 +64,13 @@ static VALUE rb_trie_read(VALUE self, VALUE filename_base) {
  *
  */
 static VALUE rb_trie_has_key(VALUE self, VALUE key) {
+    Trie *trie;
+
 	StringValue(key);
 
-    Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-    if(trie_has_key(trie, (TrieChar*)RSTRING_PTR(key)))
+    if(trie_retrieve(trie, (AlphaChar *)RSTRING_PTR(key), NULL))
 		return Qtrue;
     else
 		return Qnil;
@@ -96,13 +85,13 @@ static VALUE rb_trie_has_key(VALUE self, VALUE key) {
  *
  */
 static VALUE rb_trie_get(VALUE self, VALUE key) {
-	StringValue(key);
-
     Trie *trie;
+	TrieData data;
+
+	StringValue(key);
     Data_Get_Struct(self, Trie, trie);
 
-	TrieData data;
-    if(trie_retrieve(trie, (TrieChar*)RSTRING_PTR(key), &data))
+    if(trie_retrieve(trie, (AlphaChar *)RSTRING_PTR(key), &data))
 		return (VALUE)data;
     else
 		return Qnil;
@@ -118,19 +107,22 @@ static VALUE rb_trie_get(VALUE self, VALUE key) {
  */
 static VALUE rb_trie_add(VALUE self, VALUE args) {
 	Trie *trie;
+    int size;
+    VALUE key;
+    TrieData value;
+    
     Data_Get_Struct(self, Trie, trie);
 
-    int size = RARRAY_LEN(args);
+    size = RARRAY_LEN(args);
     if(size < 1 || size > 2)
 		return Qnil;
 
-    VALUE key;
     key = RARRAY_PTR(args)[0];
 	StringValue(key);
 
-    TrieData value = size == 2 ? RARRAY_PTR(args)[1] : TRIE_DATA_ERROR;
+    value = size == 2 ? RARRAY_PTR(args)[1] : TRIE_DATA_ERROR;
     
-    if(trie_store(trie, (TrieChar*)RSTRING_PTR(key), value))
+    if(trie_store(trie, (AlphaChar *)RSTRING_PTR(key), value))
 		return Qtrue;
     else
 		return Qnil;
@@ -144,18 +136,18 @@ static VALUE rb_trie_add(VALUE self, VALUE args) {
  *
  */
 static VALUE rb_trie_delete(VALUE self, VALUE key) {
+	Trie *trie;
 	StringValue(key);
 
-	Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-    if(trie_delete(trie, (TrieChar*)RSTRING_PTR(key)))
+    if(trie_delete(trie, (AlphaChar *)RSTRING_PTR(key)))
 		return Qtrue;
     else
 		return Qnil;
 }
 
-static VALUE walk_all_paths(Trie *trie, VALUE children, TrieState *state, char *prefix, int prefix_size) {
+static void walk_all_paths(Trie *trie, VALUE children, TrieState *state, char *prefix, int prefix_size) {
 	int c;
     for(c = 1; c < 256; c++) {
 		if(trie_state_is_walkable(state,c)) {
@@ -180,8 +172,8 @@ static VALUE walk_all_paths(Trie *trie, VALUE children, TrieState *state, char *
 }
 
 
-static Bool traverse(TrieState *state, TrieChar *char_prefix) {
-	const TrieChar *iterator = char_prefix;
+static Bool traverse(TrieState *state, AlphaChar *char_prefix) {
+	const AlphaChar *iterator = char_prefix;
 	while(*iterator != 0) {
 		if(!trie_state_is_walkable(state, *iterator))
 			return FALSE;
@@ -200,18 +192,24 @@ static Bool traverse(TrieState *state, TrieChar *char_prefix) {
  *
  */
 static VALUE rb_trie_children(VALUE self, VALUE prefix) {
+    Trie *trie;
+	int prefix_size;
+    TrieState *state;
+    VALUE children;
+	AlphaChar *char_prefix;
+	char prefix_buffer[1024];
+
     if(NIL_P(prefix))
 		return rb_ary_new();
 
 	StringValue(prefix);
 
-    Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-	int prefix_size = RSTRING_LEN(prefix);
-    TrieState *state = trie_root(trie);
-    VALUE children = rb_ary_new();
-	TrieChar *char_prefix = (TrieChar*)RSTRING_PTR(prefix);
+	prefix_size = RSTRING_LEN(prefix);
+    state = trie_root(trie);
+    children = rb_ary_new();
+	char_prefix = (AlphaChar*)RSTRING_PTR(prefix);
     
     if(!traverse(state, char_prefix)) {
     	return children;
@@ -220,7 +218,6 @@ static VALUE rb_trie_children(VALUE self, VALUE prefix) {
     if(trie_state_is_terminal(state))
 		rb_ary_push(children, prefix);
 	
-	char prefix_buffer[1024];
 	memcpy(prefix_buffer, char_prefix, prefix_size);
 	prefix_buffer[prefix_size] = 0;
 
@@ -260,17 +257,23 @@ static Bool walk_all_paths_until_first_terminal(Trie *trie, TrieState *state, ch
 }
 
 static VALUE rb_trie_has_children(VALUE self, VALUE prefix) {
+    Trie *trie;
+	int prefix_size;
+    TrieState *state;
+	AlphaChar *char_prefix;
+	char prefix_buffer[1024];
+    Bool ret;
+
     if(NIL_P(prefix))
 		return rb_ary_new();
 
 	StringValue(prefix);
 
-    Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-	int prefix_size = RSTRING_LEN(prefix);
-    TrieState *state = trie_root(trie);
-	TrieChar *char_prefix = (TrieChar*)RSTRING_PTR(prefix);
+	prefix_size = RSTRING_LEN(prefix);
+    state = trie_root(trie);
+	char_prefix = (AlphaChar*)RSTRING_PTR(prefix);
 
     if(!traverse(state, char_prefix)) {
 		return Qfalse;
@@ -279,37 +282,41 @@ static VALUE rb_trie_has_children(VALUE self, VALUE prefix) {
     if(trie_state_is_terminal(state))
         return Qtrue;
 
-	char prefix_buffer[1024];
 	memcpy(prefix_buffer, char_prefix, prefix_size);
 	prefix_buffer[prefix_size] = 0;
 
-    Bool ret = walk_all_paths_until_first_terminal(trie, state, prefix_buffer, prefix_size);
+    ret = walk_all_paths_until_first_terminal(trie, state, prefix_buffer, prefix_size);
 
     trie_state_free(state);
     return ret == TRUE ? Qtrue : Qfalse;
 }
 
-static VALUE walk_all_paths_with_values(Trie *trie, VALUE children, TrieState *state, char *prefix, int prefix_size) {
+static void walk_all_paths_with_values(Trie *trie, VALUE children, TrieState *state, char *prefix, int prefix_size) {
 	int c;
+    TrieState *next_state, *end_state;
+    char *word;
+    VALUE tuple;
+    TrieData trie_data;
+    
     for(c = 1; c < 256; c++) {
 		if(trie_state_is_walkable(state,c)) {
-			TrieState *next_state = trie_state_clone(state);
+			next_state = trie_state_clone(state);
 			trie_state_walk(next_state, c);
 
 			prefix[prefix_size] = c;
 			prefix[prefix_size + 1] = 0;
 
 			if(trie_state_is_terminal(next_state)) {
-				TrieState *end_state = trie_state_clone(next_state);
+				end_state = trie_state_clone(next_state);
 				trie_state_walk(end_state, '\0');
  
-				char *word = (char*) malloc(prefix_size + 2);
+				word = (char*) malloc(prefix_size + 2);
 				memcpy(word, prefix, prefix_size + 2);
 
-				VALUE tuple = rb_ary_new();
+				tuple = rb_ary_new();
 				rb_ary_push(tuple, rb_str_new2(word));
 
-				TrieData trie_data = trie_state_get_data(end_state);
+				trie_data = trie_state_get_data(end_state);
 				rb_ary_push(tuple, (VALUE)trie_data);
 				rb_ary_push(children, tuple);
  
@@ -332,39 +339,45 @@ static VALUE walk_all_paths_with_values(Trie *trie, VALUE children, TrieState *s
  * 
  */
 static VALUE rb_trie_children_with_values(VALUE self, VALUE prefix) {
+    Trie *trie;
+	int prefix_size;
+    AlphaChar *char_prefix;
+    VALUE children, tuple;
+    TrieState *state, *end_state;
+    TrieData trie_data;
+	char prefix_buffer[1024];
+    
     if(NIL_P(prefix))
 		return rb_ary_new();
 
 	StringValue(prefix);
 
-    Trie *trie;
     Data_Get_Struct(self, Trie, trie);
 
-	int prefix_size = RSTRING_LEN(prefix);
-    TrieChar *char_prefix = (TrieChar*)RSTRING_PTR(prefix);
+	prefix_size = RSTRING_LEN(prefix);
+    char_prefix = (AlphaChar*)RSTRING_PTR(prefix);
     
-    VALUE children = rb_ary_new();
+    children = rb_ary_new();
 
-    TrieState *state = trie_root(trie);
+    state = trie_root(trie);
     
     if(!traverse(state, char_prefix)) {
 		return children;
 	}
 
     if(trie_state_is_terminal(state)) {
-		TrieState *end_state = trie_state_clone(state);
+		end_state = trie_state_clone(state);
 		trie_state_walk(end_state, '\0');
 
-		VALUE tuple = rb_ary_new();
+		tuple = rb_ary_new();
 		rb_ary_push(tuple, prefix);
-		TrieData trie_data = trie_state_get_data(end_state);
+		trie_data = trie_state_get_data(end_state);
 		rb_ary_push(tuple, (VALUE)trie_data);
 		rb_ary_push(children, tuple);
 
 		trie_state_free(end_state);
     }
 
-	char prefix_buffer[1024];
 	memcpy(prefix_buffer, char_prefix, prefix_size);
 	prefix_buffer[prefix_size] = 0;
 
@@ -385,11 +398,14 @@ static VALUE rb_trie_node_alloc(VALUE klass);
  */
 static VALUE rb_trie_root(VALUE self) {
     Trie *trie;
+    VALUE trie_node;
+	TrieState *state;
+    
     Data_Get_Struct(self, Trie, trie);
 
-    VALUE trie_node = rb_trie_node_alloc(cTrieNode);
+    trie_node = rb_trie_node_alloc(cTrieNode);
 
-	TrieState *state = trie_root(trie);
+	state = trie_root(trie);
 	RDATA(trie_node)->data = state;
     
     rb_iv_set(trie_node, "@state", Qnil);
@@ -414,12 +430,14 @@ static VALUE rb_trie_node_alloc(VALUE klass) {
 
 /* nodoc */
 static VALUE rb_trie_node_initialize_copy(VALUE self, VALUE from) {
+    VALUE state, full_state;
+    
 	RDATA(self)->data = trie_state_clone(RDATA(from)->data);
     
-    VALUE state = rb_iv_get(from, "@state");
+    state = rb_iv_get(from, "@state");
     rb_iv_set(self, "@state", state == Qnil ? Qnil : rb_str_dup(state));
 
-    VALUE full_state = rb_iv_get(from, "@full_state");
+    full_state = rb_iv_get(from, "@full_state");
     rb_iv_set(self, "@full_state", full_state == Qnil ? Qnil : rb_str_dup(full_state));
 
     return self;
@@ -456,19 +474,22 @@ static VALUE rb_trie_node_get_full_state(VALUE self) {
  *
  */
 static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
+    TrieState *state;
+    Bool result;
+    VALUE full_state;
+
 	StringValue(rchar);
 
-    TrieState *state;
     Data_Get_Struct(self, TrieState, state);
 
     if(RSTRING_LEN(rchar) != 1)
 		return Qnil;
 
-    Bool result = trie_state_walk(state, *RSTRING_PTR(rchar));
+    result = trie_state_walk(state, *RSTRING_PTR(rchar));
     
     if(result) {
 		rb_iv_set(self, "@state", rchar);
-		VALUE full_state = rb_iv_get(self, "@full_state");
+		full_state = rb_iv_get(self, "@full_state");
 		rb_str_append(full_state, rchar);
 		rb_iv_set(self, "@full_state", full_state);
 		return self;
@@ -485,21 +506,24 @@ static VALUE rb_trie_node_walk_bang(VALUE self, VALUE rchar) {
  *
  */
 static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
+	VALUE new_node, full_state;
+    TrieState *state;
+    Bool result;
+
 	StringValue(rchar);
 
-	VALUE new_node = rb_funcall(self, rb_intern("dup"), 0);
+	new_node = rb_funcall(self, rb_intern("dup"), 0);
 
-    TrieState *state;
     Data_Get_Struct(new_node, TrieState, state);
 
     if(RSTRING_LEN(rchar) != 1)
 		return Qnil;
 
-    Bool result = trie_state_walk(state, *RSTRING_PTR(rchar));
+    result = trie_state_walk(state, *RSTRING_PTR(rchar));
     
     if(result) {
 		rb_iv_set(new_node, "@state", rchar);
-		VALUE full_state = rb_iv_get(new_node, "@full_state");
+		full_state = rb_iv_get(new_node, "@full_state");
 		rb_str_append(full_state, rchar);
 		rb_iv_set(new_node, "@full_state", full_state);
 		return new_node;
@@ -516,14 +540,14 @@ static VALUE rb_trie_node_walk(VALUE self, VALUE rchar) {
  *
  */
 static VALUE rb_trie_node_value(VALUE self) {
-    TrieState *state;
-	TrieState *dup;
+    TrieState *state, *dup;
+    TrieData trie_data;
     Data_Get_Struct(self, TrieState, state);
     
     dup = trie_state_clone(state);
 
     trie_state_walk(dup, 0);
-    TrieData trie_data = trie_state_get_data(dup);
+    trie_data = trie_state_get_data(dup);
     trie_state_free(dup);
 
     return TRIE_DATA_ERROR == trie_data ? Qnil : (VALUE)trie_data;
@@ -565,30 +589,34 @@ static VALUE rb_trie_node_leaf(VALUE self) {
  * Returns true if saving was successful.
  */
 static VALUE rb_trie_save(VALUE self, VALUE filename_base) {
-  VALUE da_filename = rb_str_dup(filename_base);
+    /*
+  VALUE da_filename, tail_filename;
+  Trie *trie;
+  FILE *da_file, *tail_file;
+
   rb_str_concat(da_filename, rb_str_new2(".da"));
   StringValue(da_filename);
     
-  VALUE tail_filename = rb_str_dup(filename_base);
+  tail_filename = rb_str_dup(filename_base);
   rb_str_concat(tail_filename, rb_str_new2(".tail"));
   StringValue(tail_filename);
 
-  Trie *trie;
   Data_Get_Struct(self, Trie, trie);
 
-  FILE *da_file = fopen(RSTRING_PTR(da_filename), "w");
+  da_file = fopen(RSTRING_PTR(da_filename), "w");
   if (da_file == NULL)
     raise_ioerror("Error opening .da file for writing.");
   if (da_write(trie->da, da_file) != 0)
     raise_ioerror("Error writing DArray data.");
   fclose(da_file);
 
-  FILE *tail_file = fopen(RSTRING_PTR(tail_filename), "w");
+  tail_file = fopen(RSTRING_PTR(tail_filename), "w");
   if (tail_file == NULL)
     raise_ioerror("Error opening .tail file for writing.");
   if (tail_write(trie->tail, tail_file) != 0)
     raise_ioerror("Error writing Tail data.");
   fclose(tail_file);
+    */
 
   return Qtrue;
 }

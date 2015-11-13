@@ -1,0 +1,33 @@
+--- libdatrie-0.2.9/datrie/triedefs.h.old	2015-11-12 18:34:31.905823038 -0800
++++ libdatrie-0.2.9/datrie/triedefs.h	2015-11-12 14:20:59.161108020 -0800
+@@ -28,6 +28,7 @@
+ #define __TRIEDEFS_H
+ 
+ #include <datrie/typedefs.h>
++#include <stdint.h>
+ 
+ /**
+  * @file triedefs.h
+@@ -37,7 +38,7 @@
+ /**
+  * @brief Alphabet character type for use as input/output strings of trie keys
+  */
+-typedef uint32         AlphaChar;
++typedef uint8         AlphaChar;
+ 
+ /**
+  * @brief Error value for alphabet character
+@@ -71,11 +72,11 @@
+ /**
+  * @brief Type of value associated to trie entries
+  */
+-typedef int32          TrieData;
++typedef uintptr_t          TrieData;
+ /**
+  * @brief Trie error data
+  */
+-#define TRIE_DATA_ERROR  -1
++#define TRIE_DATA_ERROR  UINTPTR_MAX
+ 
+ #endif  /* __TRIEDEFS_H */
+ 
