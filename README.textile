@@ -87,7 +87,7 @@ There are, of course, some more interesting and advanced ways to use a trie.  Fo
   word = 'forestry'
   node = trie.root
 
-  word.split('').each do |char|
+  word.each_char do |char|
     break unless node.walk!(char)
     if node.terminal?
       puts "Found me a word: #{node.full_state}"
