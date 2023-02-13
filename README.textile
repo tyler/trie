@@ -35,7 +35,16 @@ Let's go through building a simple autocompleter using "Trie":http://rubydoc.inf
 
 <pre><code>
   require 'trie'
-  Trie.new
+  trie = Trie.new
+</code></pre>
+
+The underlying libdatrie library accepts an `AlphaMap`, which specifies the "alphabet" of Unicode code point ranges that you want to store in the trie.
+This can be specified from Ruby using an optional `AlphaMap` passed to `Trie.new`.
+
+<pre><code>
+  alpha_map = AlphaMap.new
+  alpha_map.add_range 0, 255
+  trie = Trie.new(alpha_map)
 </code></pre>
 
 Anyway.  So we've created our blank trie.  Now, since we're creating an autocompleter, we'll need to add some words into it.  We do that simply with the add method.
@@ -70,7 +79,7 @@ Okay great, we have our populated trie, we've confirmed that the keys are in the
 
 <pre><code>
   def autocomplete
-    children = TRIE.children(params[:prefix])
+    children = trie.children(params[:prefix])
 
     respond_to do |format|
       format.js { render(:string => JSON.dump(children)) }
