@@ -65,7 +65,7 @@ alpha_char_new_from_rb_value(VALUE string_value)
   }
   else
   {
-    // Convert string to Unicode code points (UTF-32). TODO: Endianness. Detect BE system.
+    // Convert string to Unicode code points (UTF-32).
     VALUE utf32_string_value = rb_str_conv_enc(string_value, NULL, get_utf32_encoding());
 
     int len = RSTRING_LEN(utf32_string_value);
