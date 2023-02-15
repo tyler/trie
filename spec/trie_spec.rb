@@ -2,9 +2,7 @@ require File.dirname(__FILE__) + '/../lib/trie'
 
 describe Trie do
   before :each do
-    @alpha_map = AlphaMap.new
-    @alpha_map.add_range 0,255
-    @trie = Trie.new(@alpha_map)
+    @trie = Trie.new
     @trie.add('rocket')
     @trie.add('rock')
     @trie.add('frederico')
@@ -13,164 +11,174 @@ describe Trie do
   
   describe :has_key? do
     it 'returns true for words in the trie' do
-      @trie.has_key?('rocket').should == true
+      expect(@trie.has_key?('rocket')).to be true
     end
 
     it 'returns true for non-ASCII words in the trie' do
-      @trie.has_key?('français').should == true
+      expect(@trie.has_key?('français')).to be true
     end
 
     it 'returns nil for words that are not in the trie' do
-      @trie.has_key?('not_in_the_trie').should be_nil
+      expect(@trie.has_key?('not_in_the_trie')).to be nil
     end
   end
 
   describe :get do
     it 'returns -1 for words in the trie without a weight' do
-      @trie.get('rocket').should == -1
+      expect(@trie.get('rocket')).to eq(-1)
     end
 
     it 'returns -1 for non-ASCII words in the trie without a weight' do
-      @trie.get('français').should == -1
+      expect(@trie.get('français')).to eq(-1)
     end
 
     it 'returns nil if the word is not in the trie' do
-      @trie.get('not_in_the_trie').should be_nil
+      expect(@trie.get('not_in_the_trie')).to be nil
     end
   end
 
   describe :add do
     it 'adds a word to the trie' do
-      @trie.add('forsooth').should == true
-      @trie.get('forsooth').should == -1
+      expect(@trie.add('forsooth')).to be true
+      expect(@trie.get('forsooth')).to eq(-1)
     end
 
     it 'adds a word with a weight to the trie' do
-      @trie.add('chicka',123).should == true
-      @trie.get('chicka').should == 123
+      expect(@trie.add('chicka',123)).to be true
+      expect(@trie.get('chicka')).to eq(123)
     end
 
     it 'adds values greater than 16-bit allows' do
-      @trie.add('chicka', 72_000).should == true
-      @trie.get('chicka').should == 72_000
+      expect(@trie.add('chicka', 72_000)).to be true
+      expect(@trie.get('chicka')).to eq(72_000)
     end
 
     it 'adds values that are not plain ASCII' do
-      @trie.add('café', 72_000).should == true
-      @trie.get('café').should == 72_000
+      expect(@trie.add('café', 72_000)).to be true
+      expect(@trie.get('café')).to eq(72_000)
     end
   end
 
   describe :add_if_absent do
     it 'adds a word to the trie' do
-      @trie.add_if_absent('forsooth').should == true
-      @trie.get('forsooth').should == -1
+      expect(@trie.add_if_absent('forsooth')).to be true
+      expect(@trie.get('forsooth')).to eq(-1)
     end
 
     it 'not add a word that is already present' do
-      @trie.add_if_absent('forsooth').should == true
-      @trie.add_if_absent('forsooth').should be_nil
+      expect(@trie.add_if_absent('forsooth')).to be true
+      expect(@trie.add_if_absent('forsooth')).to be nil
     end
   end
 
   describe :add_text do
     it 'adds multiple words to the trie delimited by spaces' do
-      @trie.add_text('forsooth chicka boom', ' ')
-      @trie.has_key?('forsooth').should == true
-      @trie.has_key?('chicka').should == true
-      @trie.has_key?('boom').should == true
-      @trie.has_key?('not_there').should be_nil
+      @trie.add_text('forsooth chicka boom')
+      expect(@trie.has_key?('forsooth')).to be true
+      expect(@trie.has_key?('chicka')).to be true
+      expect(@trie.has_key?('boom')).to be true
+      expect(@trie.has_key?('not_there')).to be nil
     end
 
     it 'adds multiple words to the trie delimited by commas' do
-      @trie.add_text('forsooth,chicka,boom', ' ,')
-      @trie.has_key?('forsooth').should == true
-      @trie.has_key?('chicka').should == true
-      @trie.has_key?('boom').should == true
-      @trie.has_key?('not_there').should be_nil
+      @trie.add_text('forsooth,chicka,boom')
+      expect(@trie.has_key?('forsooth')).to be true
+      expect(@trie.has_key?('chicka')).to be true
+      expect(@trie.has_key?('boom')).to be true
+      expect(@trie.has_key?('not_there')).to be nil
+    end
+  end
+
+  describe :add_tags do
+    it 'adds multiple words to the trie delimited by spaces' do
+      @trie.add_tags('forsooth chicka boom')
+      expect(@trie.has_key?('forsooth')).to be true
+      expect(@trie.has_key?('chicka')).to be true
+      expect(@trie.has_key?('boom')).to be true
+      expect(@trie.has_key?('not_there')).to be nil
     end
   end
 
   describe :concat do
     it 'adds multiple words to the trie' do
       @trie.concat %w{forsooth chicka boom}
-      @trie.has_key?('forsooth').should == true
-      @trie.has_key?('chicka').should == true
-      @trie.has_key?('boom').should == true
-      @trie.has_key?('not_there').should be_nil
+      expect(@trie.has_key?('forsooth')).to be true
+      expect(@trie.has_key?('chicka')).to be true
+      expect(@trie.has_key?('boom')).to be true
+      expect(@trie.has_key?('not_there')).to be nil
     end
 
     it 'adds multiple words to the trie with weights' do
       @trie.concat [['forsooth', 1], ['chicka', 2], ['boom', 3]]
-      @trie.get('forsooth').should == 1
-      @trie.get('chicka').should == 2
-      @trie.get('boom').should == 3
-      @trie.has_key?('not_there').should be_nil
+      expect(@trie.get('forsooth')).to eq(1)
+      expect(@trie.get('chicka')).to eq(2)
+      expect(@trie.get('boom')).to eq(3)
+      expect(@trie.has_key?('not_there')).to be nil
     end
   end
 
   describe :text_has_keys? do
     it 'scans words in text for keys' do
-      @trie.add_text('forsooth rock rocket', ' ')
-      @trie.text_has_keys?('the word "forsooth" is in this text').should == true
-      @trie.text_has_keys?('yes, rock!').should == true
-      @trie.text_has_keys?('3.rocket.4').should == true
-      @trie.text_has_keys?('not_there not_there_either').should be_nil
+      @trie.add_text('forsooth rock rocket')
+      expect(@trie.text_has_keys?('the word "forsooth" is in this text')).to be true
+      expect(@trie.text_has_keys?('yes, rock!')).to be true
+      expect(@trie.text_has_keys?('3.rocket.4')).to be true
+      expect(@trie.text_has_keys?('not_there not_there_either')).to be nil
     end
   end
 
   describe :tags_has_keys? do
     it 'scans words in space-delimited tag list for keys' do
-      @trie.add_text('forsooth rock rocket', ' ')
-      @trie.tags_has_keys?('banana frobozz rock').should == true
-      @trie.tags_has_keys?('rocket abc def').should == true
-      @trie.tags_has_keys?('yes forsooth group').should == true
-      @trie.tags_has_keys?('not_there not_there_either').should be_nil
+      @trie.add_tags('forsooth rock rocket')
+      expect(@trie.tags_has_keys?('banana frobozz rock')).to be true
+      expect(@trie.tags_has_keys?('rocket abc def')).to be true
+      expect(@trie.tags_has_keys?('yes forsooth group')).to be true
+      expect(@trie.tags_has_keys?('not_there not_there_either')).to be nil
     end
   end
 
   describe :delete do
     it 'deletes a word from the trie' do
-      @trie.delete('rocket').should == true
-      @trie.has_key?('rocket').should be_nil
+      expect(@trie.delete('rocket')).to be true
+      expect(@trie.has_key?('rocket')).to be nil
     end
 
     it 'deletes a non-ASCII word from the trie' do
-      @trie.delete('français').should == true
-      @trie.has_key?('français').should be_nil
+      expect(@trie.delete('français')).to be true
+      expect(@trie.has_key?('français')).to be nil
     end
   end
 
   describe :children do
     it 'returns all words beginning with a given prefix' do
       children = @trie.children('roc')
-      children.size.should == 2
-      children.should include('rock')
-      children.should include('rocket')
+      expect(children.size).to eq(2)
+      expect(children).to include('rock')
+      expect(children).to include('rocket')
     end
 
     it 'accepts non-ASCII prefixes and returns non-ASCII words' do
       @trie.add('café')
       @trie.add('cafétière')
       children = @trie.children('café')
-      children.size.should == 2
-      children.should include('café')
-      children.should include('cafétière')
+      expect(children.size).to eq(2)
+      expect(children).to include('café')
+      expect(children).to include('cafétière')
     end
 
     it 'returns blank array if prefix does not exist' do
-      @trie.children('ajsodij').should == []
+      expect(@trie.children('ajsodij')).to eq([])
     end
 
     it 'includes the prefix if the prefix is a word' do
       children = @trie.children('rock')
-      children.size.should == 2
-      children.should include('rock')
-      children.should include('rocket')
+      expect(children.size).to eq(2)
+      expect(children).to include('rock')
+      expect(children).to include('rocket')
     end
 
     it 'returns blank array if prefix is nil' do
-      @trie.children(nil).should == []
+      expect(@trie.children(nil)).to eq([])
     end
   end
 
@@ -182,33 +190,33 @@ describe Trie do
 
     it 'returns all words with values beginning with a given prefix' do
       children = @trie.children_with_values('ab')
-      children.size.should == 2
-      children.should include(['abc',2])
-      children.should include(['abcd',4])
+      expect(children.size).to eq(2)
+      expect(children).to include(['abc',2])
+      expect(children).to include(['abcd',4])
     end
 
     it 'returns all words with values beginning with a given non-ASCII prefix' do
       @trie.add('café', 2)
       @trie.add('cafétière', 4)
       children = @trie.children_with_values('café')
-      children.size.should == 2
-      children.should include(['café',2])
-      children.should include(['cafétière',4])
+      expect(children.size).to eq(2)
+      expect(children).to include(['café',2])
+      expect(children).to include(['cafétière',4])
     end
 
     it 'returns nil if prefix does not exist' do
-      @trie.children_with_values('ajsodij').should == []
+      expect(@trie.children_with_values('ajsodij')).to eq([])
     end
 
     it 'includes the prefix if the prefix is a word' do
       children = @trie.children_with_values('abc')
-      children.size.should == 2
-      children.should include(['abc',2])
-      children.should include(['abcd',4])
+      expect(children.size).to eq(2)
+      expect(children).to include(['abc',2])
+      expect(children).to include(['abcd',4])
     end
 
     it 'returns blank array if prefix is nil' do
-      @trie.children_with_values(nil).should == []
+      expect(@trie.children_with_values(nil)).to eq([])
     end
   end
 
@@ -218,7 +226,7 @@ describe Trie do
   #    @trie.add 'andreas'
   #    @trie.add 'and'
 
-  #    @trie.walk_to_terminal('anderson').should == 'and'
+  #    expect(@trie.walk_to_terminal('anderson')).to eq('and')
   #  end
 
   #  it 'returns the first word and value along a path' do
@@ -226,17 +234,17 @@ describe Trie do
   #    @trie.add 'andreas'
   #    @trie.add 'and', 15
 
-  #    @trie.walk_to_terminal('anderson',true).should == ['and', 15]
+  #    expect(@trie.walk_to_terminal('anderson',true)).to eq(['and', 15])
   #  end
   #end
 
   describe :root do
     it 'returns a TrieNode' do
-      @trie.root.should be_an_instance_of(TrieNode)
+      expect(@trie.root).to be_a TrieNode
     end
 
     it 'returns a different TrieNode each time' do
-      @trie.root.should_not == @trie.root
+      expect(@trie.root).not_to eq(@trie.root)
     end
   end
 
@@ -253,9 +261,9 @@ describe Trie do
         @trie.save(filename_base)
       end
 
-      it 'should contain the same data when reading from disk' do
+      it 'contains the same data when reading from disk' do
         trie2 = Trie.read(filename_base)
-        trie2.get('omgwtflolbbq').should == 123
+        expect(trie2.get('omgwtflolbbq')).to eq(123)
       end
     end
   end
@@ -266,36 +274,34 @@ describe Trie do
         "phantasy/file/path/that/does/not/exist"
       end
 
-      it 'should raise an error when attempting a read' do
-        lambda { Trie.read(filename_base) }.should raise_error(IOError)
+      it 'raises an error when attempting a read' do
+        expect { Trie.read(filename_base) }.to raise_error(IOError)
       end
     end
   end
 
   describe :has_children? do
     it 'returns true when there are children matching prefix' do
-      @trie.has_children?('r').should == true
-      @trie.has_children?('rock').should == true
-      @trie.has_children?('rocket').should == true
+      expect(@trie.has_children?('r')).to be true
+      expect(@trie.has_children?('rock')).to be true
+      expect(@trie.has_children?('rocket')).to be true
     end
 
     it 'returns true when there are children matching non-ASCII prefix' do
-      @trie.has_children?('franç').should == true
+      expect(@trie.has_children?('franç')).to be true
     end
 
     it 'returns false when there are no children matching prefix' do
-      @trie.has_children?('no').should == false
-      @trie.has_children?('rome').should == false
-      @trie.has_children?('roc_').should == false
+      expect(@trie.has_children?('no')).to be false
+      expect(@trie.has_children?('rome')).to be false
+      expect(@trie.has_children?('roc_')).to be false
     end
   end
 end
 
 describe TrieNode do
   before :each do
-    @alpha_map = AlphaMap.new
-    @alpha_map.add_range 0,255
-    @trie = Trie.new(@alpha_map)
+    @trie = Trie.new
     @trie.add('rocket',1)
     @trie.add('rock',2)
     @trie.add('frederico',3)
@@ -306,104 +312,145 @@ describe TrieNode do
   describe :state do
     it 'returns the most recent state character' do
       @node.walk!('r')
-      @node.state.should == 'r'
+      expect(@node.state).to eq('r')
       @node.walk!('o')
-      @node.state.should == 'o'
+      expect(@node.state).to eq('o')
     end
 
     it 'is nil when no walk has occurred' do
-      @node.state.should == nil
+      expect(@node.state).to be nil
     end
   end
 
   describe :full_state do
     it 'returns the current string' do
       @node.walk!('r').walk!('o').walk!('c')
-      @node.full_state.should == 'roc'
+      expect(@node.full_state).to eq('roc')
     end
 
     it 'is a blank string when no walk has occurred' do
-      @node.full_state.should == ''
+      expect(@node.full_state).to eq('')
     end
 
     it 'returns a non-ASCII string' do
       @node.walk!('c').walk!('a').walk!('f').walk!('é')
-      @node.full_state.should == 'café'
+      expect(@node.full_state).to eq('café')
     end
   end
   
   describe :walk! do
     it 'returns the updated object when the walk succeeds' do
       other = @node.walk!('r')
-      other.should == @node
+      expect(other).to eq(@node)
     end
 
     it 'returns nil when the walk fails' do
-      @node.walk!('q').should be_nil
+      expect(@node.walk!('q')).to be nil
     end
   end
 
   describe :walk do
     it 'returns a new node object when the walk succeeds' do
       other = @node.walk('r')
-      other.should_not == @node
+      expect(other).not_to eq(@node)
     end
 
     it 'returns nil when the walk fails' do
-      @node.walk('q').should be_nil
+      expect(@node.walk('q')).to be nil
     end
   end
 
   describe :value do
     it 'returns nil when the node is not terminal' do
       @node.walk!('r')
-      @node.value.should be_nil
+      expect(@node.value).to be nil
     end
 
     it 'returns a value when the node is terminal' do
       @node.walk!('r').walk!('o').walk!('c').walk!('k')
-      @node.value.should == 2
+      expect(@node.value).to eq(2)
     end
   end
 
   describe :terminal? do
     it 'returns true when the node is a word end' do
       @node.walk!('r').walk!('o').walk!('c').walk!('k')
-      @node.should be_terminal
+      expect(@node).to be_terminal
     end
 
     it 'returns nil when the node is not a word end' do
       @node.walk!('r').walk!('o').walk!('c')
-      @node.should_not be_terminal
+      expect(@node).not_to be_terminal
     end
   end
 
   describe :leaf? do
     it 'returns true when this is the end of a branch of the trie' do
       @node.walk!('r').walk!('o').walk!('c').walk!('k').walk!('e').walk!('t')
-      @node.should be_leaf
+      expect(@node).to be_leaf
     end
 
     it 'returns nil when there are more splits on this branch' do
       @node.walk!('r').walk!('o').walk!('c').walk!('k')
-      @node.should_not be_leaf
+      expect(@node).not_to be_leaf
     end
   end
 
   describe :clone do
     it 'creates a new instance of this node which is not this node' do
       new_node = @node.clone
-      new_node.should_not == @node
+      expect(new_node).not_to eq(@node)
     end
 
     it 'matches the state of the current node' do
       new_node = @node.clone
-      new_node.state.should == @node.state
+      expect(new_node.state).to eq(@node.state)
     end
 
     it 'matches the full_state of the current node' do
       new_node = @node.clone
-      new_node.full_state.should == @node.full_state
+      expect(new_node.full_state).to eq(@node.full_state)
+    end
+  end
+end
+
+describe AlphaMap do
+  describe 'empty map' do
+    it 'restricts adding any values' do
+      trie = Trie.new AlphaMap.new
+      expect(trie.add('a')).to be_nil
+    end
+  end
+
+  describe '.from_ranges' do
+    it 'restricts adding values outside of alphabet' do
+      trie = Trie.new AlphaMap.from_ranges('a'..'d')
+      expect(trie.add('abc')).to be_truthy
+      expect(trie.add('def')).to be_nil
+    end
+
+    it 'allows merging of ranges' do
+      trie = Trie.new AlphaMap.from_ranges('a'..'d', 'd'..'f')
+      expect(trie.add('abc')).to be_truthy
+      expect(trie.add('def')).to be_truthy
+    end
+
+    it 'allows ranges via string' do
+      trie = Trie.new AlphaMap.from_ranges('a'..'c', '_')
+      expect(trie.add('a_b_c')).to be_truthy
+    end
+
+    it 'allows integer ranges' do
+      trie = Trie.new AlphaMap.from_ranges(65..68)
+      expect(trie.add('ABC')).to be_truthy
+    end
+  end
+
+  describe '.ascii' do
+    it 'only allows ascii values' do
+      trie = Trie.new AlphaMap.ascii
+      expect(trie.add('english')).to be_truthy
+      expect(trie.add('français')).to be_nil
     end
   end
 end

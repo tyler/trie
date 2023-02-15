@@ -35,7 +35,9 @@ $gemspec         = jeweler_tasks.gemspec
 $gemspec.version = jeweler_tasks.jeweler.version
 
 require 'rake/extensiontask'
-Rake::ExtensionTask.new('trie', $gemspec)
+Rake::ExtensionTask.new('trie', $gemspec) do |ext|
+  ext.lib_dir = 'lib/trie'
+end
 CLEAN.include 'lib/**/*.so'
 
 require 'rspec/core/rake_task'

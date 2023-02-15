@@ -181,7 +181,7 @@ rb_alpha_map_add_range(VALUE self, VALUE begin, VALUE end)
   Check_Type(begin, T_FIXNUM);
   Check_Type(end, T_FIXNUM);
 
-  if (alpha_map_add_range(alpha_map, (AlphaChar)NUM2INT(begin), (AlphaChar)NUM2INT(end)) != 0)
+  if (alpha_map_add_range(alpha_map, (AlphaChar)NUM2UINT(begin), (AlphaChar)NUM2UINT(end)) != 0)
   {
     rb_raise(rb_eRuntimeError, "Error: alpha_map_add_range() failed in rb_alpha_map_add_range\n");
   }
@@ -330,41 +330,35 @@ rb_trie_text_has_keys(VALUE self, VALUE text)
   StringValue(text);
   VALUE result = Qnil;
 
-  if (!rb_enc_str_asciionly_p(text))
-  {
-    rb_raise(rb_eRuntimeError, "Error: rb_trie_text_has_keys supports only ASCII strings\n");
-  }
-
   Trie *trie;
   Data_Get_Struct(self, Trie, trie);
 
   char *s = RSTRING_PTR(text);
-  int len = RSTRING_LEN(text);
+  char *e = RSTRING_END(text);
 
   WordBuffer word_buffer;
   init_word_buffer(&word_buffer);
 
-  int i = 0;
-  while (i < len)
+  while (s < e)
   {
     // Skip non-word characters
-    while (i < len && !is_word_char_class(s[i]))
+    while (s < e && !is_word_char_class(*s))
     {
-      i++;
+      s++;
     }
 
     // Find bounds of word
-    int word_start = i;
-    while (i < len && is_word_char_class(s[i]))
+    char *word_start = s;
+    while (s < e && is_word_char_class(*s))
     {
-      i++;
+      s++;
     }
-    int word_end = i;
+    char *word_end = s;
 
     int word_len = word_end - word_start;
     if (word_len > 0)
     {
-      copy_string_to_word_buffer(&word_buffer, s + word_start, word_len);
+      copy_string_to_word_buffer(&word_buffer, word_start, word_len);
       TrieData data;
       if (trie_retrieve(trie, word_buffer_ptr(&word_buffer), &data))
       {
@@ -391,41 +385,35 @@ rb_trie_tags_has_keys(VALUE self, VALUE tags)
   VALUE result = Qnil;
   StringValue(tags);
 
-  if (!rb_enc_str_asciionly_p(tags))
-  {
-    rb_raise(rb_eRuntimeError, "Error: rb_trie_tags_has_keys supports only ASCII strings\n");
-  }
-
   Trie *trie;
   Data_Get_Struct(self, Trie, trie);
 
   char *s = RSTRING_PTR(tags);
-  int len = RSTRING_LEN(tags);
+  char *e = RSTRING_END(tags);
 
   WordBuffer word_buffer;
   init_word_buffer(&word_buffer);
 
-  int i = 0;
-  while (i < len)
+  while (s < e)
   {
     // Skip spaces
-    while (i < len && isspace(s[i]))
+    while (s < e && isspace(*s))
     {
-      i++;
+      s++;
     }
 
     // Find bounds of word
-    int word_start = i;
-    while (i < len && !isspace(s[i]))
+    char *word_start = s;
+    while (s < e && !isspace(*s))
     {
-      i++;
+      s++;
     }
-    int word_end = i;
+    char *word_end = s;
 
     int word_len = word_end - word_start;
     if (word_len > 0)
     {
-      copy_string_to_word_buffer(&word_buffer, s + word_start, word_len);
+      copy_string_to_word_buffer(&word_buffer, word_start, word_len);
       TrieData data;
       if (trie_retrieve(trie, word_buffer_ptr(&word_buffer), &data))
       {
@@ -587,55 +575,103 @@ rb_trie_concat(VALUE self, VALUE keys)
   return Qnil;
 }
 
+static inline Bool
+is_word_delimiter(char ch)
+{
+  // Equivalent of WORDS_TOKENIZER in Classic
+  return ch == ',' || isspace(ch);
+}
+
 /*
- * call-seq: add_text(text, delimiters)
+ * call-seq: add_text(text)
  *
- * Scans for words in the given string, delimited by any of the characters
- * in the given delimiters string. All words are added to the trie.
+ * Scans for words in the given string, delimited by spaces or commas.
+ * All words are added to the trie.
  *
  */
 static VALUE
-rb_trie_add_text(VALUE self, VALUE text, VALUE delimiters)
+rb_trie_add_text(VALUE self, VALUE text)
 {
   StringValue(text);
-  StringValueCStr(delimiters); // StringValueCStr used so we can use strchr()
-
-  if (!rb_enc_str_asciionly_p(text) || !rb_enc_str_asciionly_p(delimiters))
-  {
-    rb_raise(rb_eRuntimeError, "Error: rb_trie_add_text supports only ASCII strings\n");
-  }
 
   Trie *trie;
   Data_Get_Struct(self, Trie, trie);
 
   char *s = RSTRING_PTR(text);
-  int len = RSTRING_LEN(text);
-  char *delim = RSTRING_PTR(delimiters);
+  char *e = RSTRING_END(text);
 
   WordBuffer word_buffer;
   init_word_buffer(&word_buffer);
 
-  int i = 0;
-  while (i < len)
+  while (s < e)
   {
     // Skip any delimiters
-    while (i < len && strchr(delim, s[i]) != NULL)
+    while (s < e && is_word_delimiter(*s))
     {
-      i++;
+      s++;
     }
 
     // Find bounds of word
-    int word_start = i;
-    while (i < len && strchr(delim, s[i]) == NULL)
+    char *word_start = s;
+    while (s < e && !is_word_delimiter(*s))
     {
-      i++;
+      s++;
     }
-    int word_end = i;
+    char *word_end = s;
 
     int word_len = word_end - word_start;
     if (word_len > 0)
     {
-      copy_string_to_word_buffer(&word_buffer, s + word_start, word_len);
+      copy_string_to_word_buffer(&word_buffer, word_start, word_len);
+      trie_store(trie, word_buffer_ptr(&word_buffer), TRIE_DATA_ERROR);
+    }
+  }
+
+  free_word_buffer(&word_buffer);
+  return Qnil;
+}
+
+/*
+ * call-seq: add_tags(text)
+ *
+ * Scans for tags in the given string, delimited by spaces.
+ * All words are added to the trie.
+ *
+ */
+static VALUE
+rb_trie_add_tags(VALUE self, VALUE tags)
+{
+  StringValue(tags);
+
+  Trie *trie;
+  Data_Get_Struct(self, Trie, trie);
+
+  char *s = RSTRING_PTR(tags);
+  char *e = RSTRING_END(tags);
+
+  WordBuffer word_buffer;
+  init_word_buffer(&word_buffer);
+
+  while (s < e)
+  {
+    // Skip any delimiters
+    while (s < e && isspace(*s))
+    {
+      s++;
+    }
+
+    // Find bounds of word
+    char *word_start = s;
+    while (s < e && !isspace(*s))
+    {
+      s++;
+    }
+    char *word_end = s;
+
+    int word_len = word_end - word_start;
+    if (word_len > 0)
+    {
+      copy_string_to_word_buffer(&word_buffer, word_start, word_len);
       trie_store(trie, word_buffer_ptr(&word_buffer), TRIE_DATA_ERROR);
     }
   }
@@ -1116,7 +1152,8 @@ void Init_trie()
   rb_define_method(cTrie, "has_key?", rb_trie_has_key, 1);
   rb_define_method(cTrie, "text_has_keys?", rb_trie_text_has_keys, 1);
   rb_define_method(cTrie, "tags_has_keys?", rb_trie_tags_has_keys, 1);
-  rb_define_method(cTrie, "add_text", rb_trie_add_text, 2);
+  rb_define_method(cTrie, "add_text", rb_trie_add_text, 1);
+  rb_define_method(cTrie, "add_tags", rb_trie_add_tags, 1);
   rb_define_method(cTrie, "get", rb_trie_get, 1);
   rb_define_method(cTrie, "add", rb_trie_add, -2);
   rb_define_method(cTrie, "add_if_absent", rb_trie_add_if_absent, -2);
