@@ -8,7 +8,13 @@ describe Trie do
     @trie.add('frederico')
     @trie.add('français')
   end
-  
+
+  describe :allocate do
+    it 'raises an error when attempting an operation on an uninitialized object' do
+      expect { Trie.allocate.has_key?('rocket') }.to raise_error(RuntimeError)
+    end
+  end
+
   describe :has_key? do
     it 'returns true for words in the trie' do
       expect(@trie.has_key?('rocket')).to be true
@@ -297,6 +303,14 @@ describe Trie do
       expect(@trie.has_children?('roc_')).to be false
     end
   end
+
+  describe 'Marshal serialization' do
+    it 'can be serialized and deserialized back' do
+      dump = Marshal.dump(@trie)
+      loaded_trie = Marshal.load(dump)
+      expect(@trie.children('')).to eq(loaded_trie.children(''))
+    end
+  end
 end
 
 describe TrieNode do
@@ -309,6 +323,12 @@ describe TrieNode do
     @node = @trie.root
   end
   
+  describe :allocate do
+    it 'raises an error when attempting an operation on an uninitialized object' do
+      expect { TrieNode.allocate.walk!('r') }.to raise_error(RuntimeError)
+    end
+  end
+
   describe :state do
     it 'returns the most recent state character' do
       @node.walk!('r')

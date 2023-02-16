@@ -7,9 +7,113 @@
 #include "dstring.h"
 #include "ruby/encoding.h"
 
-static VALUE cTrie, cTrieNode, cAlphaMap;
+#define GetTrie(obj, trie)                                 \
+  do                                                       \
+  {                                                        \
+    TypedData_Get_Struct((obj), Trie, &trie_type, (trie)); \
+    if ((trie) == NULL)                                    \
+      raise_null_object("Trie");                           \
+  } while (0)
+
+#define GetTrieState(obj, trie_state)                                      \
+  do                                                                       \
+  {                                                                        \
+    TypedData_Get_Struct((obj), TrieState, &trie_node_type, (trie_state)); \
+    if ((trie_state) == NULL)                                              \
+      raise_null_object("TrieNode");                                       \
+  } while (0)
+
+#define GetAlphaMap(obj, alpha_map)                                      \
+  do                                                                     \
+  {                                                                      \
+    TypedData_Get_Struct((obj), AlphaMap, &alpha_map_type, (alpha_map)); \
+    if ((alpha_map) == NULL)                                             \
+      raise_null_object("AlphaMap");                                     \
+  } while (0)
+
+static VALUE cTrie = Qnil;
+static VALUE cTrieNode = Qnil;
+static VALUE cAlphaMap = Qnil;
 static rb_encoding *utf32_encoding = NULL;
-static VALUE default_alpha_map;
+static AlphaMap *default_alpha_map = NULL;
+
+static void raise_null_object(const char *className)
+{
+  rb_raise(rb_eRuntimeError, "%s was not allocated but not initialized", className);
+}
+
+static void rb_trie_free(void *data)
+{
+  if (data)
+  {
+    trie_free((Trie *)data);
+  }
+}
+
+static size_t rb_trie_memsize(const void *data)
+{
+  return data ? trie_get_serialized_size((Trie *)data) : 0;
+}
+
+static const rb_data_type_t trie_type = {
+    .wrap_struct_name = "Trie",
+    .function = {
+        .dmark = NULL,
+        .dfree = rb_trie_free,
+        .dsize = rb_trie_memsize,
+    },
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+};
+
+static void rb_trie_node_free(void *data)
+{
+  if (data)
+  {
+    trie_state_free((TrieState *)data);
+  }
+}
+
+static size_t rb_trie_node_memsize(const void *ptr)
+{
+  // Estimate - libdatrie struct is opaque
+  return 64;
+}
+
+static const rb_data_type_t trie_node_type = {
+    .wrap_struct_name = "TrieNode",
+    .function = {
+        .dmark = NULL,
+        .dfree = rb_trie_node_free,
+        .dsize = rb_trie_node_memsize},
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+};
+
+static void rb_alpha_map_free(void *data)
+{
+  if (data)
+  {
+    alpha_map_free((AlphaMap *)data);
+  }
+}
+
+static size_t rb_alpha_map_memsize(const void *ptr)
+{
+  // Estimate - libdatrie struct is opaque
+  return 64;
+}
+
+static const rb_data_type_t alpha_map_type = {
+    .wrap_struct_name = "AlphaMap",
+    .function = {
+        .dmark = NULL,
+        .dfree = rb_alpha_map_free,
+        .dsize = rb_alpha_map_memsize,
+    },
+    .data = NULL,
+    .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+};
 
 /*
  * Fetch UTF-32 encoding for this system.
@@ -65,7 +169,7 @@ alpha_char_new_from_rb_value(VALUE string_value)
   }
   else
   {
-    // Convert string to Unicode code points (UTF-32).
+    // Convert string to Unicode code points (UTF-32). TODO: Endianness. Detect BE system.
     VALUE utf32_string_value = rb_str_conv_enc(string_value, NULL, get_utf32_encoding());
 
     int len = RSTRING_LEN(utf32_string_value);
@@ -162,9 +266,7 @@ rb_alpha_map_alloc(VALUE klass)
     rb_raise(rb_eRuntimeError, "Error: alpha_map_new() failed in rb_alpha_map_alloc\n");
   }
 
-  VALUE obj = Data_Wrap_Struct(klass, 0, alpha_map_free, alpha_map);
-  rb_iv_set(obj, "@ranges", rb_ary_new());
-  return obj;
+  return TypedData_Wrap_Struct(klass, &alpha_map_type, alpha_map);
 }
 
 /*
@@ -176,7 +278,7 @@ static VALUE
 rb_alpha_map_add_range(VALUE self, VALUE begin, VALUE end)
 {
   AlphaMap *alpha_map;
-  Data_Get_Struct(self, AlphaMap, alpha_map);
+  GetAlphaMap(self, alpha_map);
 
   Check_Type(begin, T_FIXNUM);
   Check_Type(end, T_FIXNUM);
@@ -186,29 +288,7 @@ rb_alpha_map_add_range(VALUE self, VALUE begin, VALUE end)
     rb_raise(rb_eRuntimeError, "Error: alpha_map_add_range() failed in rb_alpha_map_add_range\n");
   }
 
-  VALUE ranges = rb_iv_get(self, "@ranges");
-  Check_Type(ranges, T_ARRAY);
-
-  VALUE range = rb_ary_new();
-  rb_ary_push(range, begin);
-  rb_ary_push(range, end);
-
-  rb_ary_push(ranges, range);
-
   return Qnil;
-}
-
-/*
- * call-seq: ranges -> array
- *
- * Returns an array containing all ranges that have been added to this alpha map
- * using add_range. Each range is a tuple [begin, end].
- *
- */
-static VALUE
-rb_alpha_map_get_ranges(VALUE self)
-{
-  return rb_iv_get(self, "@ranges");
 }
 
 /*
@@ -220,29 +300,26 @@ rb_alpha_map_get_ranges(VALUE self)
  */
 
 static VALUE
-rb_trie_initialize(VALUE self, VALUE alpha_map_value)
+rb_trie_alloc(VALUE klass)
 {
-  rb_iv_set(self, "@alpha_map", alpha_map_value);
-  return self;
+  return TypedData_Wrap_Struct(klass, &trie_type, NULL);
 }
 
 static VALUE
-rb_trie_new(int argc, VALUE *argv, VALUE klass)
+rb_trie_initialize(int argc, VALUE *argv, VALUE self)
 {
-  VALUE alpha_map_value;
+  AlphaMap *alpha_map = default_alpha_map;
+  VALUE alpha_map_value = Qnil;
 
-  if (rb_scan_args(argc, argv, "01", &alpha_map_value) == 0)
+  if (rb_scan_args(argc, argv, "01", &alpha_map_value) != 0)
   {
-    alpha_map_value = default_alpha_map;
-  }
+    if (!rb_obj_is_kind_of(alpha_map_value, cAlphaMap))
+    {
+      rb_raise(rb_eRuntimeError, "Error: Trie#initialize must be passed an AlphaMap\n");
+    }
 
-  if (!rb_obj_is_kind_of(alpha_map_value, cAlphaMap))
-  {
-    rb_raise(rb_eRuntimeError, "Error: Trie.new must be passed an AlphaMap\n");
+    GetAlphaMap(alpha_map_value, alpha_map);
   }
-
-  AlphaMap *alpha_map;
-  Data_Get_Struct(alpha_map_value, AlphaMap, alpha_map);
 
   Trie *trie = trie_new(alpha_map);
   if (trie == NULL)
@@ -250,16 +327,12 @@ rb_trie_new(int argc, VALUE *argv, VALUE klass)
     rb_raise(rb_eRuntimeError, "Error: trie_new() failed in rb_trie_new\n");
   }
 
-  VALUE self = Data_Wrap_Struct(klass, 0, trie_free, trie);
-
-  VALUE init_argv[1];
-  init_argv[0] = alpha_map_value;
-  rb_obj_call_init(self, 1, init_argv);
+  RDATA(self)->data = trie;
 
   return self;
 }
 
-static void raise_ioerror(const char * message)
+static void raise_ioerror(const char *message)
 {
   VALUE rb_eIOError = rb_const_get(rb_cObject, rb_intern("IOError"));
   rb_raise(rb_eIOError, "%s", message);
@@ -271,14 +344,14 @@ static void raise_ioerror(const char * message)
  * Returns a new trie with data as read from disk.
  */
 static VALUE
-rb_trie_read(VALUE self, VALUE filename)
+rb_trie_read(VALUE klass, VALUE filename)
 {
   StringValueCStr(filename);
 
   Trie *trie = trie_new_from_file(RSTRING_PTR(filename));
   if (trie != NULL)
   {
-    return Data_Wrap_Struct(self, 0, trie_free, trie);
+    return TypedData_Wrap_Struct(klass, &trie_type, trie);
   }
   else
   {
@@ -300,7 +373,7 @@ rb_trie_has_key(VALUE self, VALUE key)
   StringValue(key);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
   TrieData data;
@@ -331,7 +404,7 @@ rb_trie_text_has_keys(VALUE self, VALUE text)
   VALUE result = Qnil;
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   char *s = RSTRING_PTR(text);
   char *e = RSTRING_END(text);
@@ -386,7 +459,7 @@ rb_trie_tags_has_keys(VALUE self, VALUE tags)
   StringValue(tags);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   char *s = RSTRING_PTR(tags);
   char *e = RSTRING_END(tags);
@@ -441,7 +514,7 @@ rb_trie_get(VALUE self, VALUE key)
   StringValue(key);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   TrieData data;
 
@@ -468,7 +541,7 @@ static VALUE
 rb_trie_add(VALUE self, VALUE args)
 {
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   int size = RARRAY_LEN(args);
   if (size < 1 || size > 2)
@@ -506,7 +579,7 @@ static VALUE
 rb_trie_add_if_absent(VALUE self, VALUE args)
 {
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   int size = RARRAY_LEN(args);
   if (size < 1 || size > 2)
@@ -544,12 +617,12 @@ static VALUE
 rb_trie_concat(VALUE self, VALUE keys)
 {
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   Check_Type(keys, T_ARRAY);
 
   int size = RARRAY_LEN(keys);
-  for (int i=0; i<size; i++)
+  for (int i = 0; i < size; i++)
   {
     VALUE obj = RARRAY_PTR(keys)[i];
 
@@ -595,7 +668,7 @@ rb_trie_add_text(VALUE self, VALUE text)
   StringValue(text);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   char *s = RSTRING_PTR(text);
   char *e = RSTRING_END(text);
@@ -644,7 +717,7 @@ rb_trie_add_tags(VALUE self, VALUE tags)
   StringValue(tags);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   char *s = RSTRING_PTR(tags);
   char *e = RSTRING_END(tags);
@@ -692,7 +765,7 @@ rb_trie_delete(VALUE self, VALUE key)
   StringValue(key);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
   Bool result = trie_delete(trie, alpha_key);
@@ -706,7 +779,7 @@ static VALUE
 alpha_char_to_rb_str(AlphaChar *alpha_char)
 {
   // Convert AlphaChar* to a Ruby UTF-32 string
-  VALUE utf32_value = rb_enc_str_new((const char*)alpha_char, sizeof(AlphaChar) * alpha_char_strlen(alpha_char), get_utf32_encoding());
+  VALUE utf32_value = rb_enc_str_new((const char *)alpha_char, sizeof(AlphaChar) * alpha_char_strlen(alpha_char), get_utf32_encoding());
 
   // Convert Ruby UTF-32 string to UTF-8
   return rb_str_conv_enc(utf32_value, NULL, rb_utf8_encoding());
@@ -748,7 +821,7 @@ rb_trie_children(VALUE self, VALUE prefix)
   prefix_alpha_char = alpha_char_new_from_rb_value(prefix);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   state = trie_root(trie);
 
@@ -813,7 +886,7 @@ rb_trie_has_children(VALUE self, VALUE prefix)
   prefix_alpha_char = alpha_char_new_from_rb_value(prefix);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   state = trie_root(trie);
 
@@ -874,7 +947,7 @@ rb_trie_children_with_values(VALUE self, VALUE prefix)
   prefix_alpha_char = alpha_char_new_from_rb_value(prefix);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   state = trie_root(trie);
 
@@ -935,7 +1008,7 @@ static VALUE
 rb_trie_root(VALUE self)
 {
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   VALUE trie_node = rb_trie_node_alloc(cTrieNode);
 
@@ -959,7 +1032,7 @@ rb_trie_root(VALUE self)
 static VALUE
 rb_trie_node_alloc(VALUE klass)
 {
-  return Data_Wrap_Struct(klass, 0, trie_state_free, NULL);
+  return TypedData_Wrap_Struct(klass, &trie_node_type, NULL);
 }
 
 /* nodoc */
@@ -1019,7 +1092,7 @@ rb_trie_node_walk_bang(VALUE self, VALUE rchar)
   AlphaChar *alpha_char = alpha_char_new_from_rb_value(rchar);
 
   TrieState *state;
-  Data_Get_Struct(self, TrieState, state);
+  GetTrieState(self, state);
 
   if (alpha_char_strlen(alpha_char) == 1 && trie_state_walk(state, *alpha_char))
   {
@@ -1052,7 +1125,7 @@ rb_trie_node_walk(VALUE self, VALUE rchar)
   VALUE new_node = rb_funcall(self, rb_intern("dup"), 0);
 
   TrieState *state;
-  Data_Get_Struct(new_node, TrieState, state);
+  GetTrieState(self, state);
 
   if (alpha_char_strlen(alpha_char) == 1 && trie_state_walk(state, *alpha_char))
   {
@@ -1078,7 +1151,7 @@ static VALUE
 rb_trie_node_value(VALUE self)
 {
   TrieState *state;
-  Data_Get_Struct(self, TrieState, state);
+  GetTrieState(self, state);
 
   if (!trie_state_is_terminal(state))
   {
@@ -1106,7 +1179,7 @@ static VALUE
 rb_trie_node_terminal(VALUE self)
 {
   TrieState *state;
-  Data_Get_Struct(self, TrieState, state);
+  GetTrieState(self, state);
 
   return trie_state_is_terminal(state) ? Qtrue : Qnil;
 }
@@ -1120,7 +1193,7 @@ static VALUE
 rb_trie_node_leaf(VALUE self)
 {
   TrieState *state;
-  Data_Get_Struct(self, TrieState, state);
+  GetTrieState(self, state);
 
   return trie_state_is_leaf(state) ? Qtrue : Qnil;
 }
@@ -1136,18 +1209,76 @@ rb_trie_save(VALUE self, VALUE filename)
   StringValueCStr(filename);
 
   Trie *trie;
-  Data_Get_Struct(self, Trie, trie);
+  GetTrie(self, trie);
 
   int res = trie_save(trie, RSTRING_PTR(filename));
   return res == 0 ? Qtrue : Qnil;
 }
 
+/*
+ * call-seq: marshal_dump() -> marshaled data dump
+ *
+ * Serializes the Trie for use in Marshal serialization. Returns the
+ * serialized representation of the Trie.
+ */
+static VALUE
+rb_trie_marshal_dump(VALUE self)
+{
+  Trie *trie;
+  GetTrie(self, trie);
+
+  size_t size = trie_get_serialized_size(trie);
+  uint8 *ptr = (uint8 *)malloc(size);
+  if (ptr == NULL)
+  {
+    rb_raise(rb_eRuntimeError, "Error: malloc() failed in rb_trie_marshal_dump()\n");
+  }
+
+  trie_serialize(trie, ptr);
+
+  VALUE hash = rb_hash_new();
+  rb_hash_aset(hash, ID2SYM(rb_intern("data")), rb_str_new((char *)ptr, size));
+
+  free(ptr);
+
+  return hash;
+}
+
+static VALUE
+rb_trie_marshal_load(VALUE self, VALUE hash)
+{
+  VALUE data = rb_hash_aref(hash, ID2SYM(rb_intern("data")));
+  Check_Type(data, T_STRING);
+
+  FILE *fp = fmemopen(RSTRING_PTR(data), RSTRING_LEN(data), "r");
+  if (fp == NULL)
+  {
+    rb_raise(rb_eRuntimeError, "Error: fmemopen() failed in rb_trie_marshal_load()\n");
+  }
+
+  Trie *new_trie = trie_fread(fp);
+  fclose(fp);
+
+  if (new_trie == NULL)
+  {
+    rb_raise(rb_eRuntimeError, "Error: trie_fread() failed in rb_trie_marshal_load()\n");
+  }
+
+  if (RDATA(self)->data != NULL)
+  {
+    // marshal_load has been called on an already-initialized Trie... free it.
+    trie_free((Trie *)RDATA(self)->data);
+  }
+
+  RDATA(self)->data = new_trie;
+  return Qnil;
+}
+
 void Init_trie()
 {
   cTrie = rb_define_class("Trie", rb_cObject);
-
-  rb_define_singleton_method(cTrie, "new", rb_trie_new, -1);
-  rb_define_method(cTrie, "initialize", rb_trie_initialize, 1);
+  rb_define_alloc_func(cTrie, rb_trie_alloc);
+  rb_define_method(cTrie, "initialize", rb_trie_initialize, -1);
   rb_define_module_function(cTrie, "read", rb_trie_read, 1);
   rb_define_method(cTrie, "has_key?", rb_trie_has_key, 1);
   rb_define_method(cTrie, "text_has_keys?", rb_trie_text_has_keys, 1);
@@ -1164,6 +1295,8 @@ void Init_trie()
   rb_define_method(cTrie, "has_children?", rb_trie_has_children, 1);
   rb_define_method(cTrie, "root", rb_trie_root, 0);
   rb_define_method(cTrie, "save", rb_trie_save, 1);
+  rb_define_method(cTrie, "marshal_load", rb_trie_marshal_load, 1);
+  rb_define_method(cTrie, "marshal_dump", rb_trie_marshal_dump, 0);
 
   cTrieNode = rb_define_class("TrieNode", rb_cObject);
   rb_define_alloc_func(cTrieNode, rb_trie_node_alloc);
@@ -1179,9 +1312,7 @@ void Init_trie()
   cAlphaMap = rb_define_class("AlphaMap", rb_cObject);
   rb_define_alloc_func(cAlphaMap, rb_alpha_map_alloc);
   rb_define_method(cAlphaMap, "add_range", rb_alpha_map_add_range, 2);
-  rb_define_method(cAlphaMap, "ranges", rb_alpha_map_get_ranges, 0);
 
-  default_alpha_map = rb_alpha_map_alloc(cAlphaMap);
-  rb_gc_register_mark_object(default_alpha_map);
-  rb_alpha_map_add_range(default_alpha_map, INT2FIX(0), INT2FIX(255));
+  default_alpha_map = alpha_map_new();
+  alpha_map_add_range(default_alpha_map, 0, 255);
 }
