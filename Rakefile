@@ -23,9 +23,13 @@ jeweler_tasks = Jeweler::Tasks.new do |gem|
   gem.summary = "Ruby Trie"
   gem.authors = ["Tyler McMullen", "Matt Hickford"]
   gem.extensions = ['ext/trie/extconf.rb']
-  gem.require_paths = ['ext']
-  gem.files = FileList["[A-Z]*.*", "{spec,ext}/**/*"]
+  gem.require_paths = ['lib']
+  gem.files = FileList["[A-Z]*.*", "{spec,ext}/**/*", "lib/trie.rb"]
+  gem.files.exclude 'ext/trie/Makefile'
+  gem.files.exclude 'ext/trie/libdatrie/**/{[ABD-Z]*,*.sh,*.ac,*.in,*.am,*.map,*.def}'
+  gem.files.exclude 'ext/trie/libdatrie/{tools,tests,nsis,man,doc,build-aux}/**/*'
   gem.files.exclude '*.gem'
+  gem.files.exclude '*.o'
   gem.files.exclude '*.bundle'
   gem.rdoc_options = ['--title', 'Trie', '--line-numbers', '--op', 'rdoc', '--main', 'ext/trie/trie_ext.c', 'README']
 end

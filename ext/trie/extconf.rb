@@ -14,5 +14,4 @@ $srcs = [
 $INCFLAGS << " -I$(srcdir)/libdatrie -I$(srcdir)/libdatrie/datrie"
 $VPATH << "$(srcdir)/libdatrie/datrie"
 
-create_makefile 'trie'
-
+create_makefile 'trie/trie'
