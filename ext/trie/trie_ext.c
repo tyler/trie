@@ -142,24 +142,23 @@ get_utf32_encoding()
 }
 
 /*
- * Convert Ruby string to AlphaChar string. The VALUE string_value is expected
- * to be of string type, e.g. coerced with StringValue().
+ * Convert Ruby value to AlphaChar string.
  */
 static AlphaChar *
-alpha_char_new_from_rb_value(VALUE string_value)
+alpha_char_new_from_rb_value(VALUE value)
 {
-  Check_Type(string_value, T_STRING);
+  StringValue(value);
 
-  if (rb_enc_str_asciionly_p(string_value))
+  if (rb_enc_str_asciionly_p(value))
   {
     // Fast path for ACSII-only strings
-    int len = RSTRING_LEN(string_value);
+    int len = RSTRING_LEN(value);
     AlphaChar *result = (AlphaChar *)malloc(sizeof(AlphaChar) * (len + 1));
     if (result == NULL)
     {
       rb_raise(rb_eRuntimeError, "Error: malloc() failed in alpha_char_new_from_rb_value\n");
     }
-    char *s = RSTRING_PTR(string_value);
+    char *s = RSTRING_PTR(value);
     for (int i = 0; i < len; i++)
     {
       result[i] = s[i];
@@ -170,7 +169,7 @@ alpha_char_new_from_rb_value(VALUE string_value)
   else
   {
     // Convert string to Unicode code points (UTF-32). TODO: Endianness. Detect BE system.
-    VALUE utf32_string_value = rb_str_conv_enc(string_value, NULL, get_utf32_encoding());
+    VALUE utf32_string_value = rb_str_conv_enc(value, NULL, get_utf32_encoding());
 
     int len = RSTRING_LEN(utf32_string_value);
 
@@ -324,7 +323,7 @@ rb_trie_initialize(int argc, VALUE *argv, VALUE self)
   Trie *trie = trie_new(alpha_map);
   if (trie == NULL)
   {
-    rb_raise(rb_eRuntimeError, "Error: trie_new() failed in rb_trie_new\n");
+    rb_raise(rb_eRuntimeError, "Error: trie_new() failed in rb_trie_initialize\n");
   }
 
   RDATA(self)->data = trie;
@@ -370,8 +369,6 @@ rb_trie_read(VALUE klass, VALUE filename)
 static VALUE
 rb_trie_has_key(VALUE self, VALUE key)
 {
-  StringValue(key);
-
   Trie *trie;
   GetTrie(self, trie);
 
@@ -386,7 +383,7 @@ rb_trie_has_key(VALUE self, VALUE key)
 static inline Bool
 is_word_char_class(char ch)
 {
-  // Equivalent of "\w" character class in Ruby regex:[A - Za - z0 - 9 _]
+  // Equivalent of "\w" character class in Ruby regex: [A-Za-z0-9_]
   return isalnum(ch) || ch == '_';
 }
 
@@ -511,15 +508,12 @@ rb_trie_get(VALUE self, VALUE key)
 {
   VALUE result = Qnil;
 
-  StringValue(key);
-
   Trie *trie;
   GetTrie(self, trie);
 
-  TrieData data;
-
   AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
 
+  TrieData data;
   if (trie_retrieve(trie, alpha_key, &data))
   {
     result = INT2FIX(data);
@@ -548,19 +542,17 @@ rb_trie_add(VALUE self, VALUE args)
   {
     return Qnil;
   }
-  VALUE key;
-  key = RARRAY_PTR(args)[0];
-  StringValue(key);
 
-  AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
   TrieData trie_data_value = TRIE_DATA_ERROR;
-
   if (size == 2)
   {
     VALUE weight = RARRAY_PTR(args)[1];
     Check_Type(weight, T_FIXNUM);
     trie_data_value = NUM2INT(weight);
   }
+
+  VALUE key = RARRAY_PTR(args)[0];
+  AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
 
   Bool result = trie_store(trie, alpha_key, trie_data_value);
 
@@ -586,13 +578,8 @@ rb_trie_add_if_absent(VALUE self, VALUE args)
   {
     return Qnil;
   }
-  VALUE key;
-  key = RARRAY_PTR(args)[0];
-  StringValue(key);
 
-  AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
   TrieData trie_data_value = TRIE_DATA_ERROR;
-
   if (size == 2)
   {
     VALUE weight = RARRAY_PTR(args)[1];
@@ -600,9 +587,13 @@ rb_trie_add_if_absent(VALUE self, VALUE args)
     trie_data_value = NUM2INT(weight);
   }
 
+  VALUE key = RARRAY_PTR(args)[0];
+  AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
+
   Bool result = trie_store_if_absent(trie, alpha_key, trie_data_value);
 
   alpha_char_free(alpha_key);
+
   return result ? Qtrue : Qnil;
 }
 
@@ -630,7 +621,6 @@ rb_trie_concat(VALUE self, VALUE keys)
     {
       VALUE key = RARRAY_PTR(obj)[0];
       VALUE weight = RARRAY_LEN(obj) > 1 ? RARRAY_PTR(obj)[1] : INT2FIX(-1);
-      StringValue(key);
       Check_Type(weight, T_FIXNUM);
       AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
       trie_store(trie, alpha_key, NUM2INT(weight));
@@ -638,7 +628,6 @@ rb_trie_concat(VALUE self, VALUE keys)
     }
     else
     {
-      StringValue(obj);
       AlphaChar *alpha_key = alpha_char_new_from_rb_value(obj);
       trie_store(trie, alpha_key, TRIE_DATA_ERROR);
       alpha_char_free(alpha_key);
@@ -762,8 +751,6 @@ rb_trie_add_tags(VALUE self, VALUE tags)
 static VALUE
 rb_trie_delete(VALUE self, VALUE key)
 {
-  StringValue(key);
-
   Trie *trie;
   GetTrie(self, trie);
 
@@ -817,7 +804,6 @@ rb_trie_children(VALUE self, VALUE prefix)
   {
     goto exit_gracefully;
   }
-  StringValue(prefix);
   prefix_alpha_char = alpha_char_new_from_rb_value(prefix);
 
   Trie *trie;
@@ -882,7 +868,6 @@ rb_trie_has_children(VALUE self, VALUE prefix)
   {
     goto exit_gracefully;
   }
-  StringValue(prefix);
   prefix_alpha_char = alpha_char_new_from_rb_value(prefix);
 
   Trie *trie;
@@ -943,7 +928,6 @@ rb_trie_children_with_values(VALUE self, VALUE prefix)
   {
     goto exit_gracefully;
   }
-  StringValue(prefix);
   prefix_alpha_char = alpha_char_new_from_rb_value(prefix);
 
   Trie *trie;
@@ -1247,8 +1231,10 @@ rb_trie_marshal_dump(VALUE self)
 static VALUE
 rb_trie_marshal_load(VALUE self, VALUE hash)
 {
+  Check_Type(hash, T_HASH);
+
   VALUE data = rb_hash_aref(hash, ID2SYM(rb_intern("data")));
-  Check_Type(data, T_STRING);
+  StringValue(data);
 
   FILE *fp = fmemopen(RSTRING_PTR(data), RSTRING_LEN(data), "r");
   if (fp == NULL)
