@@ -24,8 +24,8 @@ describe Trie do
       expect(@trie.has_key?('français')).to be true
     end
 
-    it 'returns nil for words that are not in the trie' do
-      expect(@trie.has_key?('not_in_the_trie')).to be nil
+    it 'returns false for words that are not in the trie' do
+      expect(@trie.has_key?('not_in_the_trie')).to be false
     end
   end
 
@@ -45,81 +45,119 @@ describe Trie do
 
   describe :add do
     it 'adds a word to the trie' do
-      expect(@trie.add('forsooth')).to be true
+      expect(@trie.add('forsooth')).to be @trie
       expect(@trie.get('forsooth')).to eq(-1)
     end
 
     it 'adds a word with a weight to the trie' do
-      expect(@trie.add('chicka',123)).to be true
+      expect(@trie.add('chicka',123)).to be @trie
       expect(@trie.get('chicka')).to eq(123)
     end
 
     it 'adds values greater than 16-bit allows' do
-      expect(@trie.add('chicka', 72_000)).to be true
+      expect(@trie.add('chicka', 72_000)).to be @trie
       expect(@trie.get('chicka')).to eq(72_000)
     end
 
     it 'adds values that are not plain ASCII' do
-      expect(@trie.add('café', 72_000)).to be true
+      expect(@trie.add('café', 72_000)).to be @trie
       expect(@trie.get('café')).to eq(72_000)
+    end
+
+    it 'replaces existing keys' do
+      expect(@trie.add('café', 72_000)).to be @trie
+      expect(@trie.add('café', 36_000)).to be @trie
+      expect(@trie.get('café')).to eq(36_000)
+    end
+
+    it 'raises ArgumentError for <1 argument' do
+      expect { @trie.add }.to raise_error(ArgumentError)
+    end
+
+    it 'raises ArgumentError for >2 arguments' do
+      expect { @trie.add(1,2,3) }.to raise_error(ArgumentError)
     end
   end
 
-  describe :add_if_absent do
+  describe :add? do
     it 'adds a word to the trie' do
-      expect(@trie.add_if_absent('forsooth')).to be true
+      expect(@trie.add?('forsooth')).to be @trie
       expect(@trie.get('forsooth')).to eq(-1)
     end
 
-    it 'not add a word that is already present' do
-      expect(@trie.add_if_absent('forsooth')).to be true
-      expect(@trie.add_if_absent('forsooth')).to be nil
+    it 'adds a word with a weight to the trie' do
+      expect(@trie.add?('chicka',123)).to be @trie
+      expect(@trie.get('chicka')).to eq(123)
+    end
+
+    it 'adds values greater than 16-bit allows' do
+      expect(@trie.add?('chicka', 72_000)).to be @trie
+      expect(@trie.get('chicka')).to eq(72_000)
+    end
+
+    it 'adds values that are not plain ASCII' do
+      expect(@trie.add?('café', 72_000)).to be @trie
+      expect(@trie.get('café')).to eq(72_000)
+    end
+
+    it 'does not replace existing keys' do
+      expect(@trie.add?('café', 72_000)).to be @trie
+      expect(@trie.add?('café', 36_000)).to be nil
+      expect(@trie.get('café')).to eq(72_000)
+    end
+
+    it 'raises ArgumentError for <1 argument' do
+      expect { @trie.add? }.to raise_error(ArgumentError)
+    end
+
+    it 'raises ArgumentError for >2 arguments' do
+      expect { @trie.add?(1,2,3) }.to raise_error(ArgumentError)
     end
   end
 
   describe :add_text do
     it 'adds multiple words to the trie delimited by spaces' do
-      @trie.add_text('forsooth chicka boom')
+      expect(@trie.add_text('forsooth chicka boom')).to be @trie
       expect(@trie.has_key?('forsooth')).to be true
       expect(@trie.has_key?('chicka')).to be true
       expect(@trie.has_key?('boom')).to be true
-      expect(@trie.has_key?('not_there')).to be nil
+      expect(@trie.has_key?('not_there')).to be false
     end
 
     it 'adds multiple words to the trie delimited by commas' do
-      @trie.add_text('forsooth,chicka,boom')
+      expect(@trie.add_text('forsooth,chicka,boom')).to be @trie
       expect(@trie.has_key?('forsooth')).to be true
       expect(@trie.has_key?('chicka')).to be true
       expect(@trie.has_key?('boom')).to be true
-      expect(@trie.has_key?('not_there')).to be nil
+      expect(@trie.has_key?('not_there')).to be false
     end
   end
 
   describe :add_tags do
     it 'adds multiple words to the trie delimited by spaces' do
-      @trie.add_tags('forsooth chicka boom')
+      expect(@trie.add_tags('forsooth chicka boom')).to be @trie
       expect(@trie.has_key?('forsooth')).to be true
       expect(@trie.has_key?('chicka')).to be true
       expect(@trie.has_key?('boom')).to be true
-      expect(@trie.has_key?('not_there')).to be nil
+      expect(@trie.has_key?('not_there')).to be false
     end
   end
 
   describe :concat do
     it 'adds multiple words to the trie' do
-      @trie.concat %w{forsooth chicka boom}
+      expect(@trie.concat %w{forsooth chicka boom}).to be @trie
       expect(@trie.has_key?('forsooth')).to be true
       expect(@trie.has_key?('chicka')).to be true
       expect(@trie.has_key?('boom')).to be true
-      expect(@trie.has_key?('not_there')).to be nil
+      expect(@trie.has_key?('not_there')).to be false
     end
 
     it 'adds multiple words to the trie with weights' do
-      @trie.concat [['forsooth', 1], ['chicka', 2], ['boom', 3]]
+      expect(@trie.concat [['forsooth', 1], ['chicka', 2], ['boom', 3]]).to be @trie
       expect(@trie.get('forsooth')).to eq(1)
       expect(@trie.get('chicka')).to eq(2)
       expect(@trie.get('boom')).to eq(3)
-      expect(@trie.has_key?('not_there')).to be nil
+      expect(@trie.has_key?('not_there')).to be false
     end
   end
 
@@ -129,7 +167,7 @@ describe Trie do
       expect(@trie.text_has_keys?('the word "forsooth" is in this text')).to be true
       expect(@trie.text_has_keys?('yes, rock!')).to be true
       expect(@trie.text_has_keys?('3.rocket.4')).to be true
-      expect(@trie.text_has_keys?('not_there not_there_either')).to be nil
+      expect(@trie.text_has_keys?('not_there not_there_either')).to be false
     end
   end
 
@@ -139,19 +177,39 @@ describe Trie do
       expect(@trie.tags_has_keys?('banana frobozz rock')).to be true
       expect(@trie.tags_has_keys?('rocket abc def')).to be true
       expect(@trie.tags_has_keys?('yes forsooth group')).to be true
-      expect(@trie.tags_has_keys?('not_there not_there_either')).to be nil
+      expect(@trie.tags_has_keys?('not_there not_there_either')).to be false
     end
   end
 
   describe :delete do
     it 'deletes a word from the trie' do
-      expect(@trie.delete('rocket')).to be true
-      expect(@trie.has_key?('rocket')).to be nil
+      expect(@trie.delete('rocket')).to be @trie
+      expect(@trie.has_key?('rocket')).to be false
     end
 
     it 'deletes a non-ASCII word from the trie' do
-      expect(@trie.delete('français')).to be true
-      expect(@trie.has_key?('français')).to be nil
+      expect(@trie.delete('français')).to be @trie
+      expect(@trie.has_key?('français')).to be false
+    end
+
+    it 'does nothing and returns self if a nonexistent key is deleted' do
+      expect(@trie.delete('not_there')).to be @trie
+    end
+  end
+
+  describe :delete? do
+    it 'deletes a word from the trie' do
+      expect(@trie.delete?('rocket')).to be @trie
+      expect(@trie.has_key?('rocket')).to be false
+    end
+
+    it 'deletes a non-ASCII word from the trie' do
+      expect(@trie.delete?('français')).to be @trie
+      expect(@trie.has_key?('français')).to be false
+    end
+
+    it 'does nothing and returns nil if a nonexistent key is deleted' do
+      expect(@trie.delete?('not_there')).to be nil
     end
   end
 

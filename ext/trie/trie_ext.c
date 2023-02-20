@@ -135,7 +135,7 @@ get_utf32_encoding()
 
     if (utf32_encoding == NULL)
     {
-      rb_raise(rb_eRuntimeError, "Error: rb_enc_get() failed to get UTF-32 encoding in alpha_char_new_from_rb_value\n");
+      rb_raise(rb_eRuntimeError, "rb_enc_get() failed to get UTF-32 encoding in alpha_char_new_from_rb_value");
     }
   }
   return utf32_encoding;
@@ -152,14 +152,14 @@ alpha_char_new_from_rb_value(VALUE value)
   if (rb_enc_str_asciionly_p(value))
   {
     // Fast path for ACSII-only strings
-    int len = RSTRING_LEN(value);
+    long len = RSTRING_LEN(value);
     AlphaChar *result = (AlphaChar *)malloc(sizeof(AlphaChar) * (len + 1));
     if (result == NULL)
     {
-      rb_raise(rb_eRuntimeError, "Error: malloc() failed in alpha_char_new_from_rb_value\n");
+      rb_raise(rb_eRuntimeError, "malloc() failed in alpha_char_new_from_rb_value");
     }
     char *s = RSTRING_PTR(value);
-    for (int i = 0; i < len; i++)
+    for (long i = 0; i < len; i++)
     {
       result[i] = s[i];
     }
@@ -176,7 +176,7 @@ alpha_char_new_from_rb_value(VALUE value)
     AlphaChar *result = (AlphaChar *)malloc(sizeof(AlphaChar) * (len + 1));
     if (result == NULL)
     {
-      rb_raise(rb_eRuntimeError, "Error: malloc() failed in alpha_char_new_from_rb_value\n");
+      rb_raise(rb_eRuntimeError, "malloc() failed in alpha_char_new_from_rb_value");
     }
     memcpy(result, RSTRING_PTR(utf32_string_value), len * sizeof(AlphaChar));
     result[len] = 0;
@@ -201,7 +201,7 @@ void alpha_char_free(AlphaChar *s)
 typedef struct
 {
   AlphaChar *buffer;
-  int capacity;
+  long capacity;
 } WordBuffer;
 
 static void init_word_buffer(WordBuffer *word_buffer)
@@ -228,7 +228,7 @@ word_buffer_ptr(WordBuffer *word_buffer)
 }
 
 static void
-copy_string_to_word_buffer(WordBuffer *word_buffer, char *word_start, int length)
+copy_string_to_word_buffer(WordBuffer *word_buffer, char *word_start, long length)
 {
   if (word_buffer->buffer == NULL || word_buffer->capacity < length)
   {
@@ -237,12 +237,12 @@ copy_string_to_word_buffer(WordBuffer *word_buffer, char *word_start, int length
     word_buffer->buffer = (AlphaChar *)malloc(sizeof(AlphaChar) * (word_buffer->capacity + 1));
     if (word_buffer->buffer == NULL)
     {
-      rb_raise(rb_eRuntimeError, "Error: malloc() failed in copy_string_to_word_buffer\n");
+      rb_raise(rb_eRuntimeError, "malloc() failed in copy_string_to_word_buffer");
     }
   }
   // Note: This code only supports ASCII characters, not full Unicode.
   AlphaChar *ptr = word_buffer->buffer;
-  for (int i = 0; i < length; i++)
+  for (long i = 0; i < length; i++)
   {
     ptr[i] = word_start[i];
   }
@@ -262,7 +262,7 @@ rb_alpha_map_alloc(VALUE klass)
   AlphaMap *alpha_map = alpha_map_new();
   if (alpha_map == NULL)
   {
-    rb_raise(rb_eRuntimeError, "Error: alpha_map_new() failed in rb_alpha_map_alloc\n");
+    rb_raise(rb_eRuntimeError, "alpha_map_new() failed in rb_alpha_map_alloc");
   }
 
   return TypedData_Wrap_Struct(klass, &alpha_map_type, alpha_map);
@@ -284,7 +284,7 @@ rb_alpha_map_add_range(VALUE self, VALUE begin, VALUE end)
 
   if (alpha_map_add_range(alpha_map, (AlphaChar)NUM2UINT(begin), (AlphaChar)NUM2UINT(end)) != 0)
   {
-    rb_raise(rb_eRuntimeError, "Error: alpha_map_add_range() failed in rb_alpha_map_add_range\n");
+    rb_raise(rb_eRuntimeError, "alpha_map_add_range() failed in rb_alpha_map_add_range");
   }
 
   return Qnil;
@@ -314,7 +314,7 @@ rb_trie_initialize(int argc, VALUE *argv, VALUE self)
   {
     if (!rb_obj_is_kind_of(alpha_map_value, cAlphaMap))
     {
-      rb_raise(rb_eRuntimeError, "Error: Trie#initialize must be passed an AlphaMap\n");
+      rb_raise(rb_eTypeError, "Trie#initialize must be passed an AlphaMap");
     }
 
     GetAlphaMap(alpha_map_value, alpha_map);
@@ -323,7 +323,7 @@ rb_trie_initialize(int argc, VALUE *argv, VALUE self)
   Trie *trie = trie_new(alpha_map);
   if (trie == NULL)
   {
-    rb_raise(rb_eRuntimeError, "Error: trie_new() failed in rb_trie_initialize\n");
+    rb_raise(rb_eRuntimeError, "trie_new() failed in rb_trie_initialize");
   }
 
   RDATA(self)->data = trie;
@@ -377,7 +377,7 @@ rb_trie_has_key(VALUE self, VALUE key)
   Bool result = trie_retrieve(trie, alpha_key, &data);
   alpha_char_free(alpha_key);
 
-  return result ? Qtrue : Qnil;
+  return result ? Qtrue : Qfalse;
 }
 
 static inline Bool
@@ -398,7 +398,7 @@ static VALUE
 rb_trie_text_has_keys(VALUE self, VALUE text)
 {
   StringValue(text);
-  VALUE result = Qnil;
+  VALUE result = Qfalse;
 
   Trie *trie;
   GetTrie(self, trie);
@@ -425,7 +425,7 @@ rb_trie_text_has_keys(VALUE self, VALUE text)
     }
     char *word_end = s;
 
-    int word_len = word_end - word_start;
+    long word_len = word_end - word_start;
     if (word_len > 0)
     {
       copy_string_to_word_buffer(&word_buffer, word_start, word_len);
@@ -452,7 +452,7 @@ rb_trie_text_has_keys(VALUE self, VALUE text)
 static VALUE
 rb_trie_tags_has_keys(VALUE self, VALUE tags)
 {
-  VALUE result = Qnil;
+  VALUE result = Qfalse;
   StringValue(tags);
 
   Trie *trie;
@@ -480,7 +480,7 @@ rb_trie_tags_has_keys(VALUE self, VALUE tags)
     }
     char *word_end = s;
 
-    int word_len = word_end - word_start;
+    long word_len = word_end - word_start;
     if (word_len > 0)
     {
       copy_string_to_word_buffer(&word_buffer, word_start, word_len);
@@ -528,7 +528,9 @@ rb_trie_get(VALUE self, VALUE key)
  * call-seq: add(key) add(key,value)
  *
  * Add a key, or a key and value to the Trie.  If you add a key without a value
- * it assumes true for the value.
+ * it assumes -1 for the value. If the operation succeeds, returns self.
+ * If the key could not be added to the trie, returns nil. Any existing key in
+ * the trie is replaced.
  *
  */
 static VALUE
@@ -537,71 +539,75 @@ rb_trie_add(VALUE self, VALUE args)
   Trie *trie;
   GetTrie(self, trie);
 
-  int size = RARRAY_LEN(args);
+  long size = RARRAY_LEN(args);
   if (size < 1 || size > 2)
   {
+    rb_raise(rb_eArgError, "wrong number of arguments (given 0, expected 1..2)");
     return Qnil;
   }
 
   TrieData trie_data_value = TRIE_DATA_ERROR;
   if (size == 2)
   {
-    VALUE weight = RARRAY_PTR(args)[1];
+    VALUE weight = RARRAY_AREF(args, 1);
     Check_Type(weight, T_FIXNUM);
     trie_data_value = NUM2INT(weight);
   }
 
-  VALUE key = RARRAY_PTR(args)[0];
+  VALUE key = RARRAY_AREF(args, 0);
   AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
 
   Bool result = trie_store(trie, alpha_key, trie_data_value);
 
   alpha_char_free(alpha_key);
-  return result ? Qtrue : Qnil;
+  return result ? self : Qnil;
 }
 
 /*
- * call-seq: add_if_absent(key) add_if_absent(key, value)
+ * call-seq: add?(key) add?(key, value)
  *
  * Add a key, or a key and value to the Trie.  If you add a key without a value
- * it assumes true for the value.
+ * it assumes -1 for the value. If the key is added to the trie, returns self.
+ * If the key is already in the trie or could not be added to the trie, returns nil.
  *
  */
 static VALUE
-rb_trie_add_if_absent(VALUE self, VALUE args)
+rb_trie_add_p(VALUE self, VALUE args)
 {
   Trie *trie;
   GetTrie(self, trie);
 
-  int size = RARRAY_LEN(args);
+  long size = RARRAY_LEN(args);
   if (size < 1 || size > 2)
   {
+    rb_raise(rb_eArgError, "wrong number of arguments (given 0, expected 1..2)");
     return Qnil;
   }
 
   TrieData trie_data_value = TRIE_DATA_ERROR;
   if (size == 2)
   {
-    VALUE weight = RARRAY_PTR(args)[1];
+    VALUE weight = RARRAY_AREF(args, 1);
     Check_Type(weight, T_FIXNUM);
     trie_data_value = NUM2INT(weight);
   }
 
-  VALUE key = RARRAY_PTR(args)[0];
+  VALUE key = RARRAY_AREF(args, 0);
   AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
 
   Bool result = trie_store_if_absent(trie, alpha_key, trie_data_value);
 
   alpha_char_free(alpha_key);
 
-  return result ? Qtrue : Qnil;
+  return result ? self : Qnil;
 }
 
 /*
  * call-seq: concat(keys)
  *
  * Adds an array of keys to the Trie. Each element of the array may be a string, or a sub-array
- * containing a key and a weight.
+ * containing a key and a weight. Keys that do not match the trie's alphabet are discarded.
+ * Returns self.
  *
  */
 static VALUE
@@ -612,15 +618,15 @@ rb_trie_concat(VALUE self, VALUE keys)
 
   Check_Type(keys, T_ARRAY);
 
-  int size = RARRAY_LEN(keys);
-  for (int i = 0; i < size; i++)
+  long size = RARRAY_LEN(keys);
+  for (long i = 0; i < size; i++)
   {
-    VALUE obj = RARRAY_PTR(keys)[i];
+    VALUE obj = RARRAY_AREF(keys, i);
 
     if (TYPE(obj) == T_ARRAY)
     {
-      VALUE key = RARRAY_PTR(obj)[0];
-      VALUE weight = RARRAY_LEN(obj) > 1 ? RARRAY_PTR(obj)[1] : INT2FIX(-1);
+      VALUE key = RARRAY_AREF(obj, 0);
+      VALUE weight = RARRAY_LEN(obj) > 1 ? RARRAY_AREF(obj, 1) : INT2FIX(-1);
       Check_Type(weight, T_FIXNUM);
       AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
       trie_store(trie, alpha_key, NUM2INT(weight));
@@ -634,7 +640,7 @@ rb_trie_concat(VALUE self, VALUE keys)
     }
   }
 
-  return Qnil;
+  return self;
 }
 
 static inline Bool
@@ -648,7 +654,8 @@ is_word_delimiter(char ch)
  * call-seq: add_text(text)
  *
  * Scans for words in the given string, delimited by spaces or commas.
- * All words are added to the trie.
+ * All words are added to the trie. Words not in the trie's alphabet
+ * are discarded. Returns self.
  *
  */
 static VALUE
@@ -681,7 +688,7 @@ rb_trie_add_text(VALUE self, VALUE text)
     }
     char *word_end = s;
 
-    int word_len = word_end - word_start;
+    long word_len = word_end - word_start;
     if (word_len > 0)
     {
       copy_string_to_word_buffer(&word_buffer, word_start, word_len);
@@ -690,14 +697,15 @@ rb_trie_add_text(VALUE self, VALUE text)
   }
 
   free_word_buffer(&word_buffer);
-  return Qnil;
+  return self;
 }
 
 /*
  * call-seq: add_tags(text)
  *
  * Scans for tags in the given string, delimited by spaces.
- * All words are added to the trie.
+ * All words are added to the trie. Words not accepted by the trie's
+ * alphabet are discarded. Returns self.
  *
  */
 static VALUE
@@ -730,7 +738,7 @@ rb_trie_add_tags(VALUE self, VALUE tags)
     }
     char *word_end = s;
 
-    int word_len = word_end - word_start;
+    long word_len = word_end - word_start;
     if (word_len > 0)
     {
       copy_string_to_word_buffer(&word_buffer, word_start, word_len);
@@ -739,13 +747,13 @@ rb_trie_add_tags(VALUE self, VALUE tags)
   }
 
   free_word_buffer(&word_buffer);
-  return Qnil;
+  return self;
 }
 
 /*
  * call-seq: delete(key)
  *
- * Delete a key from the Trie.  Returns true if it deleted a key, nil otherwise.
+ * Delete a key from the Trie and returns self.
  *
  */
 static VALUE
@@ -755,11 +763,30 @@ rb_trie_delete(VALUE self, VALUE key)
   GetTrie(self, trie);
 
   AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
+  trie_delete(trie, alpha_key);
+  alpha_char_free(alpha_key);
+
+  return self;
+}
+
+/*
+ * call-seq: delete?(key)
+ *
+ * Deletes a key from the Trie and returns self. If a key was not deleted, returns nil.
+ *
+ */
+static VALUE
+rb_trie_delete_p(VALUE self, VALUE key)
+{
+  Trie *trie;
+  GetTrie(self, trie);
+
+  AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
   Bool result = trie_delete(trie, alpha_key);
 
   alpha_char_free(alpha_key);
 
-  return result ? Qtrue : Qnil;
+  return result ? self : Qnil;
 }
 
 static VALUE
@@ -1165,7 +1192,7 @@ rb_trie_node_terminal(VALUE self)
   TrieState *state;
   GetTrieState(self, state);
 
-  return trie_state_is_terminal(state) ? Qtrue : Qnil;
+  return trie_state_is_terminal(state) ? Qtrue : Qfalse;
 }
 
 /*
@@ -1179,7 +1206,7 @@ rb_trie_node_leaf(VALUE self)
   TrieState *state;
   GetTrieState(self, state);
 
-  return trie_state_is_leaf(state) ? Qtrue : Qnil;
+  return trie_state_is_leaf(state) ? Qtrue : Qfalse;
 }
 
 /*
@@ -1215,7 +1242,7 @@ rb_trie_marshal_dump(VALUE self)
   uint8 *ptr = (uint8 *)malloc(size);
   if (ptr == NULL)
   {
-    rb_raise(rb_eRuntimeError, "Error: malloc() failed in rb_trie_marshal_dump()\n");
+    rb_raise(rb_eRuntimeError, "malloc() failed in rb_trie_marshal_dump()");
   }
 
   trie_serialize(trie, ptr);
@@ -1239,7 +1266,7 @@ rb_trie_marshal_load(VALUE self, VALUE hash)
   FILE *fp = fmemopen(RSTRING_PTR(data), RSTRING_LEN(data), "r");
   if (fp == NULL)
   {
-    rb_raise(rb_eRuntimeError, "Error: fmemopen() failed in rb_trie_marshal_load()\n");
+    rb_raise(rb_eRuntimeError, "fmemopen() failed in rb_trie_marshal_load()");
   }
 
   Trie *new_trie = trie_fread(fp);
@@ -1247,7 +1274,7 @@ rb_trie_marshal_load(VALUE self, VALUE hash)
 
   if (new_trie == NULL)
   {
-    rb_raise(rb_eRuntimeError, "Error: trie_fread() failed in rb_trie_marshal_load()\n");
+    rb_raise(rb_eRuntimeError, "trie_fread() failed in rb_trie_marshal_load()");
   }
 
   if (RDATA(self)->data != NULL)
@@ -1273,9 +1300,10 @@ void Init_trie()
   rb_define_method(cTrie, "add_tags", rb_trie_add_tags, 1);
   rb_define_method(cTrie, "get", rb_trie_get, 1);
   rb_define_method(cTrie, "add", rb_trie_add, -2);
-  rb_define_method(cTrie, "add_if_absent", rb_trie_add_if_absent, -2);
+  rb_define_method(cTrie, "add?", rb_trie_add_p, -2);
   rb_define_method(cTrie, "concat", rb_trie_concat, 1);
   rb_define_method(cTrie, "delete", rb_trie_delete, 1);
+  rb_define_method(cTrie, "delete?", rb_trie_delete_p, 1);
   rb_define_method(cTrie, "children", rb_trie_children, 1);
   rb_define_method(cTrie, "children_with_values", rb_trie_children_with_values, 1);
   rb_define_method(cTrie, "has_children?", rb_trie_has_children, 1);
