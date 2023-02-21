@@ -496,39 +496,39 @@ describe AlphaMap do
   describe 'empty map' do
     it 'restricts adding any values' do
       trie = Trie.new AlphaMap.new
-      expect(trie.add('a')).to be_nil
+      expect(trie.add?('a')).to be nil
     end
   end
 
   describe '.from_ranges' do
     it 'restricts adding values outside of alphabet' do
       trie = Trie.new AlphaMap.from_ranges('a'..'d')
-      expect(trie.add('abc')).to be_truthy
-      expect(trie.add('def')).to be_nil
+      expect(trie.add?('abc')).to be trie
+      expect(trie.add?('def')).to be_nil
     end
 
     it 'allows merging of ranges' do
       trie = Trie.new AlphaMap.from_ranges('a'..'d', 'd'..'f')
-      expect(trie.add('abc')).to be_truthy
-      expect(trie.add('def')).to be_truthy
+      expect(trie.add?('abc')).to be trie
+      expect(trie.add?('def')).to be trie
     end
 
     it 'allows ranges via string' do
       trie = Trie.new AlphaMap.from_ranges('a'..'c', '_')
-      expect(trie.add('a_b_c')).to be_truthy
+      expect(trie.add?('a_b_c')).to be trie
     end
 
     it 'allows integer ranges' do
       trie = Trie.new AlphaMap.from_ranges(65..68)
-      expect(trie.add('ABC')).to be_truthy
+      expect(trie.add?('ABC')).to be trie
     end
   end
 
   describe '.ascii' do
     it 'only allows ascii values' do
       trie = Trie.new AlphaMap.ascii
-      expect(trie.add('english')).to be_truthy
-      expect(trie.add('français')).to be_nil
+      expect(trie.add?('english')).to be trie
+      expect(trie.add?('français')).to be_nil
     end
   end
 end

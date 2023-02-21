@@ -557,10 +557,10 @@ rb_trie_add(VALUE self, VALUE args)
   VALUE key = RARRAY_AREF(args, 0);
   AlphaChar *alpha_key = alpha_char_new_from_rb_value(key);
 
-  Bool result = trie_store(trie, alpha_key, trie_data_value);
+  trie_store(trie, alpha_key, trie_data_value);
 
   alpha_char_free(alpha_key);
-  return result ? self : Qnil;
+  return self;
 }
 
 /*
