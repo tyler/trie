@@ -115,34 +115,6 @@ describe Trie do
     end
   end
 
-  describe :add_text do
-    it 'adds multiple words to the trie delimited by spaces' do
-      expect(@trie.add_text('forsooth chicka boom')).to be @trie
-      expect(@trie.has_key?('forsooth')).to be true
-      expect(@trie.has_key?('chicka')).to be true
-      expect(@trie.has_key?('boom')).to be true
-      expect(@trie.has_key?('not_there')).to be false
-    end
-
-    it 'adds multiple words to the trie delimited by commas' do
-      expect(@trie.add_text('forsooth,chicka,boom')).to be @trie
-      expect(@trie.has_key?('forsooth')).to be true
-      expect(@trie.has_key?('chicka')).to be true
-      expect(@trie.has_key?('boom')).to be true
-      expect(@trie.has_key?('not_there')).to be false
-    end
-  end
-
-  describe :add_tags do
-    it 'adds multiple words to the trie delimited by spaces' do
-      expect(@trie.add_tags('forsooth chicka boom')).to be @trie
-      expect(@trie.has_key?('forsooth')).to be true
-      expect(@trie.has_key?('chicka')).to be true
-      expect(@trie.has_key?('boom')).to be true
-      expect(@trie.has_key?('not_there')).to be false
-    end
-  end
-
   describe :concat do
     it 'adds multiple words to the trie' do
       expect(@trie.concat %w{forsooth chicka boom}).to be @trie
@@ -158,26 +130,6 @@ describe Trie do
       expect(@trie.get('chicka')).to eq(2)
       expect(@trie.get('boom')).to eq(3)
       expect(@trie.has_key?('not_there')).to be false
-    end
-  end
-
-  describe :text_has_keys? do
-    it 'scans words in text for keys' do
-      @trie.add_text('forsooth rock rocket')
-      expect(@trie.text_has_keys?('the word "forsooth" is in this text')).to be true
-      expect(@trie.text_has_keys?('yes, rock!')).to be true
-      expect(@trie.text_has_keys?('3.rocket.4')).to be true
-      expect(@trie.text_has_keys?('not_there not_there_either')).to be false
-    end
-  end
-
-  describe :tags_has_keys? do
-    it 'scans words in space-delimited tag list for keys' do
-      @trie.add_tags('forsooth rock rocket')
-      expect(@trie.tags_has_keys?('banana frobozz rock')).to be true
-      expect(@trie.tags_has_keys?('rocket abc def')).to be true
-      expect(@trie.tags_has_keys?('yes forsooth group')).to be true
-      expect(@trie.tags_has_keys?('not_there not_there_either')).to be false
     end
   end
 
