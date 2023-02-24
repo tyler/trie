@@ -13,3 +13,4 @@ Makefile
 *.def
 *.so
 tmp/
+.sitearchdir.time
